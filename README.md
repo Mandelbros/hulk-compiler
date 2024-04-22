@@ -1,2 +1,2 @@
 # hulk-compiler
-python-based compiler for the HULK programming language
+Python-based compiler for the HULK programming language, featuring semantic analysis and C code generation capabilities.
