@@ -1,9 +1,7 @@
-from cmp.pycompiler import Grammar
-from cmp.pycompiler import Item
-from cmp.automata import State, lr0_formatter, multiline_formatter
-from cmp.tools.parsing import compute_firsts, compute_local_first, compute_follows
-from cmp.pycompiler import Symbol
-from cmp.utils import ContainerSet
+from common.pycompiler import Grammar, Item, Symbol
+from common.state import State, lr0_formatter, multiline_formatter
+from common.tools.parsing import compute_firsts, compute_local_first, compute_follows
+from common.utils import ContainerSet
 
 def build_LR0_automaton(G):
     assert len(G.startSymbol.productions) == 1, 'Grammar must be augmented'
