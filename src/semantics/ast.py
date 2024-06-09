@@ -16,7 +16,7 @@ class FunctionDefinitionNode(DefinitionNode):
         super().__init__()
         params_ids, params_types = zip(*args) if args else ([], [])
         self.id = idx
-        self.params_ids = params_ids
+        self.params_ids = params_ids        #( store params in tuples??)
         self.params_types = params_types
         self.expr = expr
         self.ret_type = ret_type
