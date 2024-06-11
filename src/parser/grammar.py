@@ -7,7 +7,7 @@ G = Grammar()
 # non-terminals
 
 # Definiciones de programa y tipos
-program, definition_list, definition, fun_def, type_def = G.NonTerminals('<program> <definition-list> <definition> <fun-def> <type-def>')
+program, definition_list, definition, func_def, type_def = G.NonTerminals('<program> <definition-list> <definition> <fun-def> <type-def>')
 
 # Expresiones
 expr, simple_expr, block_expr, expr_list = G.NonTerminals('<expr> <simple-expr> <block-expr> <expr-list>')
@@ -15,11 +15,11 @@ lego_expr, paren_expr, atom = G.NonTerminals('<lego-expr> <paren-expr> <atom>')
 
 # Sentencias (Statements)
 let_in_stmt, var_defs, typed_var, while_stmt, for_stmt = G.NonTerminals('<let-in-stmt> <var-defs> <typed-var> <while-stmt> <for-stmt>')
-if_else_stmt, elif_stmts, d_assign, member_call, fun_call = G.NonTerminals('<if-else-stmt> <elif-stmts> <d-assign> <member-call> <fun-call>')
+if_else_stmt, elif_stmts, d_assign, member_call, func_call = G.NonTerminals('<if-else-stmt> <elif-stmts> <d-assign> <member-call> <fun-call>')
                                                                             
-# Argumentos y Tipos
-args_list, args_list_eps, typed_arg = G.NonTerminals('<args-list> <args-list-eps> <typed-arg>')
-opt_typing, inherit_eps, type_args_eps = G.NonTerminals('<opt-typing> <inherit-eps> <type-args-eps>')                                                    
+# Parametros y Tipos 
+params_list, params_list_eps, typed_param = G.NonTerminals('<params-list> <params-list-eps> <typed-param>')
+opt_typing, inherit_eps, type_params_eps = G.NonTerminals('<opt-typing> <inherit-eps> <type-params-eps>')                                                    
 
 # Operadores
 d_assign_op, or_op, and_op, eq_op, ineq_op, type_test_op, concat_op = G.NonTerminals('<d-assign-op> <or-op> <and-op> <eq-op> <ineq-op> <type-test-op> <concat-op>')
@@ -53,7 +53,7 @@ program %= lego_expr, lambda h,s: ast.ProgramNode([], s[1])
 definition_list %= definition + definition_list, lambda h,s: [s[1]] + s[2]
 definition_list %= definition, lambda h,s: [s[1]] 
 
-definition %= fun_def, lambda h,s: s[1]
+definition %= func_def, lambda h,s: s[1]
 definition %= type_def, lambda h,s: s[1]          
 
 expr %= simple_expr, lambda h,s: s[1]
@@ -65,7 +65,7 @@ simple_expr %= for_stmt, lambda h, s: s[1]
 simple_expr %= if_else_stmt, lambda h, s: s[1]
 simple_expr %= d_assign, lambda h, s: s[1]
 
-block_expr %= ocur + expr_list + ccur, lambda h,s: ast.ExpressionBlockNode(s[2])
+block_expr %= ocur + expr_list + ccur, lambda h,s: ast.ExprBlockNode(s[2])
 
 lego_expr %= expr + s_colon, lambda h,s: s[1]
 lego_expr %= block_expr, lambda h,s: s[1]
@@ -139,6 +139,7 @@ member_call %= member_call + dot + idx + opar + expr_list_comma_eps + cpar,
 member_call %= member_call + dot + idx,
 member_call %= paren_expr,
 
+#parenthesized expression
 paren_expr %= opar + expr + cpar,
 paren_expr %= atom,
 
@@ -146,14 +147,13 @@ atom %= idx,
 atom %= number_lit,
 atom %= bool_lit,
 atom %= string_lit,
-atom %= fun_call,
+atom %= func_call,
 atom %= base + opar + expr_list_comma_eps + cpar,
 
-#fun_call
-fun_call %= idx + opar + expr_list_comma_eps + cpar, 
+#func_call
+func_call %= idx + opar + expr_list_comma_eps + cpar, 
 
 #letin
-
 let_in_stmt %= let + var_defs + in_ + expr,
 
 var_defs %= typed_var + comma + var_defs,
@@ -173,40 +173,40 @@ while_stmt %= while_ + opar + expr + cpar + expr,
 for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr,
 
 ##
-fun_def %= (
-    function + idx + opar + args_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h,s: ast.FunctionDefinitionNode(s[2], s[4], s[8], s[6])
+func_def %= (
+    function + idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
+    lambda h,s: ast.FuncDefNode(s[2], s[4], s[8], s[6])
 )
 
-fun_def %= (
-    function + idx + opar + args_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.FunctionDefinitionNode(s[2], s[4], s[7], s[6])
+func_def %= (
+    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
+    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6])
 )
 
-fun_def %= (
-    function + idx + opar + args_list_eps + cpar + opt_typing + block_expr, s_colon,
-    lambda h,s: ast.FunctionDefinitionNode(s[2], s[4], s[7], s[6])
+func_def %= (
+    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, s_colon,
+    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6])
 )
 
-args_list_eps %= args_list + comma, lambda h,s: s[1]
-args_list_eps %= G.Epsilon, lambda h,s: []
+params_list_eps %= params_list + comma, lambda h,s: s[1]
+params_list_eps %= G.Epsilon, lambda h,s: []
 
-args_list %= typed_arg + comma + args_list, lambda h, s: [s[1]] + s[3]
-args_list %= typed_arg, lambda h,s: [s[1]] 
+params_list %= typed_param + comma + params_list, lambda h, s: [s[1]] + s[3]
+params_list %= typed_param, lambda h,s: [s[1]] 
 
-typed_arg %= idx + opt_typing, lambda h, s: (s[1], s[2])
+typed_param %= idx + opt_typing, lambda h, s: (s[1], s[2])
 
 opt_typing %= colon + idx, lambda h, s: s[2]
 opt_typing %= G.Epsilon, lambda h, s: None
 
 #types
-type_def %= type_ + idx + type_args_eps + inherit_eps + ocur + type_def_body_eps + ccur,
+type_def %= type_ + idx + type_params_eps + inherit_eps + ocur + type_def_body_eps + ccur,
 
 inherit_eps %= G.Epsilon,
 inherit_eps %= inherits + idx,
 
-type_args_eps %= opar + args_list_eps + cpar,
-type_args_eps %= G.Epsilon,
+type_params_eps %= opar + params_list_eps + cpar,
+type_params_eps %= G.Epsilon,
 
 type_def_body %= G.Epsilon,
 type_def_body %= member_def + type_def_body,
@@ -216,18 +216,18 @@ member_def %= attr_def,
 
 ##methods
 method_def %= (
-    idx + opar + args_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h,s: ast.MethodDefinitionNode(s[2], s[4], s[8], s[6])                     #change args???
+    idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
+    lambda h,s: ast.MethodDefNode(s[2], s[4], s[8], s[6])                     
 )
 
 method_def %= (
-    idx + opar + args_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.MethodDefinitionNode(s[2], s[4], s[7], s[6])                 #change args???
+    idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
+    lambda h,s: ast.MethodDefNode(s[2], s[4], s[7], s[6])                 
 )
 
 method_def %= (
-    idx + opar + args_list_eps + cpar + opt_typing + block_expr, s_colon,
-    lambda h,s: ast.MethodDefinitionNode(s[2], s[4], s[7], s[6])                 #change args???
+    idx + opar + params_list_eps + cpar + opt_typing + block_expr, s_colon,
+    lambda h,s: ast.MethodDefNode(s[2], s[4], s[7], s[6])                 
 )
 
 #attributes
