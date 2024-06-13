@@ -1,6 +1,6 @@
 from common.pycompiler import Grammar, Item, Symbol
 from common.state import State, lr0_formatter, multiline_formatter
-from common.tools.parsing import compute_firsts, compute_local_first, compute_follows
+from common.utils import compute_firsts, compute_local_first, compute_follows
 from common.utils import ContainerSet
 
 def build_LR0_automaton(G):
@@ -101,8 +101,7 @@ class ShiftReduceParser:
                 operations.append(self.REDUCE)
                 output.append(tag)
             elif action == self.OK:
-                return output
-                # return output, operations
+                return output, operations
             else:
                 raise Exception('Invalid action!!!')                                # !ERROR!
 
@@ -149,7 +148,6 @@ def expand(item, firsts):
 
     for preview in item.Preview():
         lookaheads.update(compute_local_first(firsts, preview))
-        # lookaheads.hard_update(compute_local_first(firsts, preview))              # ???
 
     assert not lookaheads.contains_epsilon
 
@@ -218,7 +216,6 @@ def build_LR1_automaton(G):
             try:
                 next_state = visited[kernel]
             except:
-                # closure = closure_lr1(kernel,firsts)
                 closure = goto_lr1(items, symbol, firsts)
                 next_state = visited[kernel] = State(frozenset(closure), True)
                 pending.append(kernel)
