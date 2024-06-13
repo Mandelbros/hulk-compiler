@@ -1,4 +1,4 @@
-from cmp.pycompiler import Production, Sentence, Symbol, EOF, Epsilon
+from common.pycompiler import Production, Sentence, Symbol, EOF, Epsilon
 
 class ContainerSet:
     def __init__(self, *values, contains_epsilon=False):
@@ -57,7 +57,6 @@ class ContainerSet:
         if isinstance(other, set):
             return self.set == other
         return isinstance(other, ContainerSet) and self.set == other.set and self.contains_epsilon == other.contains_epsilon
-
 
 def inspect(item, grammar_name='G', mapper=None):
     try:
@@ -217,3 +216,87 @@ class DisjointNode:
 
     def __repr__(self):
         return str(self)
+    
+
+######################################  ours
+
+
+def compute_local_first(firsts, alpha):
+    first_alpha = ContainerSet()
+    
+    try:
+        alpha_is_epsilon = alpha.IsEpsilon
+    except:
+        alpha_is_epsilon = False
+    
+    if alpha_is_epsilon:
+        first_alpha.set_epsilon()
+    else:
+        for i in range(len(alpha)):
+            symbol = alpha[i]
+            first_alpha.update(firsts[symbol])
+            if not firsts[symbol].contains_epsilon:
+                break
+            elif i == len(alpha) - 1:
+                first_alpha.set_epsilon()
+
+    return first_alpha
+
+def compute_firsts(G):
+    firsts = {}
+    change = True
+    
+    for terminal in G.terminals:
+        firsts[terminal] = ContainerSet(terminal)
+        
+    for nonterminal in G.nonTerminals:
+        firsts[nonterminal] = ContainerSet()
+    
+    while change:
+        change = False
+        
+        for production in G.Productions:
+            X = production.Left
+            alpha = production.Right
+            
+            first_X = firsts[X]
+                
+            try:
+                first_alpha = firsts[alpha]
+            except KeyError:
+                first_alpha = firsts[alpha] = ContainerSet()
+            
+            local_first = compute_local_first(firsts, alpha)
+            
+            change |= first_alpha.hard_update(local_first)
+            change |= first_X.hard_update(local_first)
+                    
+    return firsts
+
+def compute_follows(G, firsts):
+    follows = { }
+    change = True
+    
+    for nonterminal in G.nonTerminals:
+        follows[nonterminal] = ContainerSet()
+    follows[G.startSymbol] = ContainerSet(G.EOF)
+    
+    while change:
+        change = False
+        
+        for production in G.Productions:
+            X = production.Left
+            alpha = production.Right
+            
+            follow_X = follows[X]
+            
+            for i in range(len(alpha)):
+                Y = alpha[i]
+                if Y.IsNonTerminal:
+                    beta = alpha[i + 1:]
+                    firsts_beta = compute_local_first(firsts, beta)
+                    change |= follows[Y].update(firsts_beta)
+                    if firsts_beta.contains_epsilon or len(beta) == 0:
+                        change |= follows[Y].update(follow_X)
+
+    return follows

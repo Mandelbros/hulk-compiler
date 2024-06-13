@@ -1,5 +1,5 @@
 from common.pycompiler import Grammar
-import semantics.ast as ast
+import semantics.hulk_ast as ast
 
 # grammar
 G = Grammar()
