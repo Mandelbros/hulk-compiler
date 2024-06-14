@@ -1,5 +1,5 @@
 from common.pycompiler import Grammar
-from regex_ast import *
+from lexer.regex_ast import *
 
 G = Grammar()
 
@@ -23,3 +23,5 @@ S %= symbol, lambda h, s: [SymbolNode(s[1])]
 S %= symbol + S, lambda h, s: [SymbolNode(s[1])] + s[2]
 S %= symbol + minus + symbol, lambda h, s: RangeNode(SymbolNode(s[1]), SymbolNode(s[3])).evaluate()
 S %= symbol + minus + symbol + S, lambda h, s: RangeNode(SymbolNode(s[1]), SymbolNode(s[3])).evaluate() + s[4]
+
+

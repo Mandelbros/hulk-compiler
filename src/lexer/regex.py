@@ -1,26 +1,26 @@
 from common.utils import Token
 from common.evaluation import evaluate_reverse_parse
 from common.automata import nfa_to_dfa, automata_minimization
-from regex_grammar import G, symbol
-from parser.parsing_tools import SLR1Parser
+from lexer.regex_grammar import G, symbol
+from parser.parsing_tools import LR1Parser
 
-parser = SLR1Parser(G) 
+parser = LR1Parser(G) 
 
 class Regex():
-    def __init__(self, exp):
-        self.exp = exp
+    def __init__(self, text):
+        self.text = text
         self.automaton = self.regex_automaton()
         pass
     
-    def regex_tokenizer(text, G, skip_whitespaces=True):
+    def regex_tokenizer(self,skip_whitespaces=True):
         tokens = []
 
-        fixed_tokens = {lex: Token(lex,G[lex]) for lex in '| * ( ) symbol ε + - ? [ ]'.split()}
+        fixed_tokens = {lex: Token(lex, G[lex]) for lex in '| * ( ) symbol ε + - ? [ ]'.split()}
         
         is_symbol_set = is_escape = False
-        for char in text:
-            if skip_whitespaces and char.isspace():
-                continue
+        for char in self.text:
+            # if skip_whitespaces and char.isspace():
+            #     continue
             
             if is_escape:
                 token = Token(char, symbol)

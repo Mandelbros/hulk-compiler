@@ -1,6 +1,6 @@
 from common.utils import Token
 from common.state import State
-from regex import Regex
+from lexer.regex import Regex
 
 class Lexer:
     def __init__(self, table, eof):
@@ -43,9 +43,13 @@ class Lexer:
     
     def _tokenize(self, text):
         while text != '':
+            while text[0].isspace():            # maybe all spaces can be removed at the begining of tokenize
+                text = text[1:]
+
             final_state, final_lex = self._walk(text)
 
             if len(final_lex) == 0:
+                print("error. aborting")
                 return #################################### ERROR
             
             bst = -1
@@ -67,3 +71,6 @@ class Lexer:
     
     def __call__(self, text):
         return [ Token(lex, ttype) for lex, ttype in self._tokenize(text) ]
+
+
+

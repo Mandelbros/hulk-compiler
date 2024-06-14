@@ -1,5 +1,5 @@
 from common.automata import NFA, DFA, nfa_to_dfa
-from common.automata import automata_union, automata_concatenation, automata_closure, automata_minimization
+from common.automata import automata_minimization
 
 EPSILON = 'ε'    ######################### ?
 
@@ -39,45 +39,39 @@ class BinaryNode(Node):
 
 class EpsilonNode(AtomicNode):
     def evaluate(self):
-        return DFA(states=1, finals=[0], transitions={})
+        return NFA(states=1, finals=[0], transitions={})
 
 class SymbolNode(AtomicNode):
     def evaluate(self):
         s = self.lex
-        return DFA(states=2, finals=[1], transitions={(0, s) : 1})
-
-SymbolNode('a').evaluate() 
+        return NFA(states=2, finals=[1], transitions={(0, s) : [1]})
 
 class ClosureNode(UnaryNode):
     @staticmethod
     def operate(value):
-        return automata_closure(value)
-    
-ClosureNode(SymbolNode('a')).evaluate()
+        return NFA.automata_closure(value)
 
 class UnionNode(BinaryNode):
     @staticmethod
     def operate(lvalue, rvalue):
-        return automata_union(lvalue, rvalue)
+        return NFA.automata_union(lvalue, rvalue)
 
-UnionNode(SymbolNode('a'), SymbolNode('b')).evaluate()
 
 class ConcatNode(BinaryNode):
     @staticmethod
     def operate(lvalue, rvalue):
-        return automata_concatenation(lvalue, rvalue)
+        return NFA.automata_concatenation(lvalue, rvalue)
 
-ConcatNode(SymbolNode('a'), SymbolNode('b')).evaluate()
 
 class PClosureNode(UnaryNode):
     @staticmethod
     def operate(value):        
-        return automata_concatenation(value, value.automata_closure())
+        return NFA.automata_concatenation(value, value.automata_closure())
     
 class OptionalNode(UnaryNode):
     @staticmethod
     def operate(value):        
-        return automata_union(value, EpsilonNode(EPSILON).evaluate())
+        return NFA.automata_union(value, EpsilonNode(EPSILON).evaluate())
     
 class SymbolSetNode(Node):
     def __init__(self, symbols: list[SymbolNode]) -> None:

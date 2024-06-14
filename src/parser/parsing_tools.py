@@ -78,7 +78,14 @@ class ShiftReduceParser:
 
             if (state, lookahead) not in self.action:
                 print((state, lookahead))
-                print("Error. Aborting...")                                               # !ERROR!
+                print("Error. Aborting...")                                          # !ERROR!
+                # for i in range(0,cursor+1):
+                #     print(w[i])
+                # print(output)
+                # print(operations)
+                # for (x,y) in self.action:
+                #     if(x==state):
+                #         print(x,y)
                 return None
 
             action, tag = self.action[state, lookahead]
@@ -251,6 +258,6 @@ class LR1Parser(ShiftReduceParser):
                         self._register(self.goto, (idx, next_symbol), node[next_symbol.Name][0].idx)
 
     @staticmethod
-    def _register(table, key, value):
+    def _register(table, key, value):  
         assert key not in table or table[key] == value, 'Shift-Reduce or Reduce-Reduce conflict!!!'             # !ERROR!
         table[key] = value

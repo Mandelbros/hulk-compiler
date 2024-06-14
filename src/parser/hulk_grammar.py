@@ -6,8 +6,10 @@ G = Grammar()
 
 # non-terminals
 
+program = G.NonTerminal('<program>', startSymbol=True)
+
 # Definiciones de programa y tipos
-program, definition_list, definition, func_def, type_def = G.NonTerminals('<program> <definition-list> <definition> <fun-def> <type-def>')
+definition_list, definition, func_def, type_def = G.NonTerminals('<definition-list> <definition> <fun-def> <type-def>')
 
 # Expresiones
 expr, simple_expr, block_expr, expr_list = G.NonTerminals('<expr> <simple-expr> <block-expr> <expr-list>')
@@ -35,7 +37,7 @@ type_def_body, type_def_body_eps, member_def, method_def, attr_def = G.NonTermin
 # terminals
 type_, inherits, base, idx, new, is_ , as_ = G.Terminals('type inherits base <id> new is as')
 let, in_, equal, d_assign = G.Terminals('let in = :=')
-function, arrow = G.Terminal('function =>')
+function, arrow = G.Terminals('function =>')
 if_, elif_, else_ = G.Terminals('if elif else')
 while_, for_ = G.Terminals('while for')
 plus, minus, star, div, mod, pow, pow2, number_lit = G.Terminals('+ - * / % ^ ** <number>')
@@ -64,7 +66,7 @@ simple_expr %= let_in_stmt, lambda h, s: s[1]
 simple_expr %= while_stmt, lambda h, s: s[1]
 simple_expr %= for_stmt, lambda h, s: s[1]
 simple_expr %= if_else_stmt, lambda h, s: s[1]
-simple_expr %= d_assign, lambda h, s: s[1]
+simple_expr %= d_assign_op, lambda h, s: s[1]
 
 block_expr %= ocur + expr_list + ccur, lambda h,s: ast.ExprBlockNode(s[2])
 
@@ -86,20 +88,17 @@ expr_list_comma %= expr + comma + expr_list_comma, lambda h, s: [s[1]] + s[3]
 #func definitions
 func_def %= (
     function + idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h,s: ast.FuncDefNode(s[2], s[4], s[8], s[6])
-)
+    lambda h, s: ast.FuncDefNode(s[2], s[4], s[8], s[6]))
 
 func_def %= (
     function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6])
-)
+    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6]))
 
 func_def %= (
-    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, s_colon,
-    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6])
-)
+    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
+    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6]))
 
-params_list_eps %= params_list + comma, lambda h,s: s[1]
+params_list_eps %= params_list, lambda h,s: s[1]
 params_list_eps %= G.Epsilon, lambda h,s: []
 
 params_list %= typed_param + comma + params_list, lambda h, s: [s[1]] + s[3]
@@ -107,15 +106,15 @@ params_list %= typed_param, lambda h,s: [s[1]]
 
 typed_param %= idx + opt_typing, lambda h, s: (s[1], s[2])
 
-opt_typing %= colon + idx, lambda h, s: s[2]
 opt_typing %= G.Epsilon, lambda h, s: None
+opt_typing %= colon + idx, lambda h, s: s[2]
 
 #type definition
-type_def %= type_ + idx + type_params_eps + inherit_eps + ocur + type_def_body_eps + ccur, lambda h, s: (
+type_def %= type_ + idx + type_params_eps + inherit_eps + ocur + type_def_body + ccur, lambda h, s: (
     ast.TypeDefNode(s[2], s[3], s[6], s[4])
 )
 
-type_def %= type_ + idx + type_params_eps + inherits + idx + opar + expr_list_comma_eps + cpar + ocur + type_def_body_eps + ccur, lambda h, s: (
+type_def %= type_ + idx + type_params_eps + inherits + idx + opar + expr_list_comma_eps + cpar + ocur + type_def_body + ccur, lambda h, s: (
     ast.TypeDefNode(s[2], s[3], s[10], s[5], s[7])
 )
 
@@ -127,27 +126,28 @@ type_params_eps %= G.Epsilon, lambda h, s: None
 
 type_def_body %= G.Epsilon, lambda h, s: []
 type_def_body %= member_def + type_def_body, lambda h, s: [s[1]] + s[2]
+
 member_def %= method_def, lambda h, s:  s[1]
 member_def %= attr_def, lambda h, s: s[1]
 
 #methods
 method_def %= (
     idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h,s: ast.MethodDefNode(s[2], s[4], s[8], s[6])                     
+    lambda h,s: ast.MethodDefNode(s[1], s[3], s[7], s[5])                     
 )
 
 method_def %= (
     idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.MethodDefNode(s[2], s[4], s[7], s[6])                 
+    lambda h,s: ast.MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
 method_def %= (
-    idx + opar + params_list_eps + cpar + opt_typing + block_expr, s_colon,
-    lambda h,s: ast.MethodDefNode(s[2], s[4], s[7], s[6])                 
+    idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
+    lambda h,s: ast.MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
 #attributes
-attr_def %= idx + opt_typing + eq + lego_expr, lambda h, s: ast.AttrDefNode(s[1], s[4], s[2])
+attr_def %= idx + opt_typing + equal + lego_expr, lambda h, s: ast.AttrDefNode(s[1], s[4], s[2])
 
 ##### statements
 
@@ -157,7 +157,7 @@ let_in_stmt %= let + var_defs + in_ + expr, lambda h, s: ast.LetInNode(s[2], s[4
 var_defs %= typed_var + comma + var_defs, lambda h, s: [s[1]] + s[3]
 var_defs %= typed_var, lambda h, s: [s[1]]
 
-typed_var %= idx + opt_typing + eq + expr, lambda h, s: ast.VarDefNode(s[1], s[4], s[2])
+typed_var %= idx + opt_typing + equal + expr, lambda h, s: ast.VarDefNode(s[1], s[4], s[2])
  
 #if_else
 if_else_stmt %= if_ + opar + expr + cpar + expr + elif_stmts + else_ + expr, lambda h, s: ast.IfElseNode([(s[3], s[5])] + s[6], s[8])
@@ -241,10 +241,3 @@ atom %= string_lit, lambda h, s: ast.ConstStrNode(s[1])
 atom %= func_call, lambda h, s: s[1]
 atom %= base + opar + expr_list_comma_eps + cpar, lambda h, s:  ast.BaseCallNode(s[3])
 
-
-
-
-
-
-
- 

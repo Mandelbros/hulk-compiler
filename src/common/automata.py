@@ -43,6 +43,81 @@ class NFA:
             return self.graph().create_svg().decode('utf8')
         except:
             pass
+    
+    def automata_closure(a1):
+        transitions = {}
+        
+        start = 0
+        d1 = 1
+        final = a1.states + d1
+        
+        for (origin, symbol), destinations in a1.map.items():
+            transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
+        
+        transitions[(start, '')] = [a1.start + d1, final]
+        
+        for f in a1.finals:
+            try:
+                transitions[(f + d1, '')] += [start]
+            except KeyError:
+                transitions[(f + d1, '')] = [start]
+                
+        states = a1.states +  2
+        finals = { final }
+        
+        return NFA(states, finals, transitions, start)
+
+    def automata_union(a1, a2):
+        transitions = {}
+        
+        start = 0
+        d1 = 1
+        d2 = a1.states + d1
+        final = a2.states + d2
+        
+        for (origin, symbol), destinations in a1.map.items():
+            transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
+
+        for (origin, symbol), destinations in a2.map.items():
+            transitions[(origin + d2, symbol)] = [dest + d2 for dest in destinations]
+        
+        transitions[(start, '')] = [a1.start + d1, a2.start + d2]
+        
+        for f in a1.finals:
+            transitions[(f + d1, '')] = [final]
+
+        for f in a2.finals:
+            transitions[(f + d2, '')] = [final]
+                
+        states = a1.states + a2.states + 2
+        finals = { final }
+        
+        return NFA(states, finals, transitions, start)
+    
+    def automata_concatenation(a1, a2):
+        transitions = {}
+        
+        start = 0
+        d1 = 0
+        d2 = a1.states + d1
+        final = a2.states + d2
+        
+        for (origin, symbol), destinations in a1.map.items():
+            transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
+
+        for (origin, symbol), destinations in a2.map.items():
+            transitions[(origin + d2, symbol)] = [dest + d2 for dest in destinations]
+        
+        for f in a1.finals:
+            transitions[(f + d1, '')] = [a2.start + d2]
+
+        for f in a2.finals:
+            transitions[(f + d2, '')] = [final]
+                
+        states = a1.states + a2.states + 1
+        finals = { final }
+        
+        return NFA(states, finals, transitions, start)
 
 class DFA(NFA):
     
@@ -136,82 +211,6 @@ def nfa_to_dfa(automaton):
     finals = [ state.id for state in states if state.is_final ]
     dfa = DFA(len(states), finals, transitions)
     return dfa
-
-def automata_union(a1, a2):
-    transitions = {}
-    
-    start = 0
-    d1 = 1
-    d2 = a1.states + d1
-    final = a2.states + d2
-    
-    for (origin, symbol), destinations in a1.map.items():
-        transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
-
-    for (origin, symbol), destinations in a2.map.items():
-        transitions[(origin + d2, symbol)] = [dest + d2 for dest in destinations]
-    
-    transitions[(start, '')] = [a1.start + d1, a2.start + d2]
-    
-    for f in a1.finals:
-        transitions[(f + d1, '')] = [final]
-
-    for f in a2.finals:
-        transitions[(f + d2, '')] = [final]
-            
-    states = a1.states + a2.states + 2
-    finals = { final }
-    
-    return NFA(states, finals, transitions, start)
-
-def automata_concatenation(a1, a2):
-    transitions = {}
-    
-    start = 0
-    d1 = 0
-    d2 = a1.states + d1
-    final = a2.states + d2
-    
-    for (origin, symbol), destinations in a1.map.items():
-        transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
-
-    for (origin, symbol), destinations in a2.map.items():
-        transitions[(origin + d2, symbol)] = [dest + d2 for dest in destinations]
-    
-    for f in a1.finals:
-        transitions[(f + d1, '')] = [a2.start + d2]
-
-    for f in a2.finals:
-        transitions[(f + d2, '')] = [final]
-            
-    states = a1.states + a2.states + 1
-    finals = { final }
-    
-    return NFA(states, finals, transitions, start)
-
-def automata_closure(a1):
-    transitions = {}
-    
-    start = 0
-    d1 = 1
-    final = a1.states + d1
-    
-    for (origin, symbol), destinations in a1.map.items():
-        transitions[(origin + d1, symbol)] = [dest + d1 for dest in destinations]
-    
-    transitions[(start, '')] = [a1.start + d1, final]
-    
-    for f in a1.finals:
-        try:
-            transitions[(f + d1, '')] += [start]
-        except KeyError:
-            transitions[(f + d1, '')] = [start]
-            
-    states = a1.states +  2
-    finals = { final }
-    
-    return NFA(states, finals, transitions, start)
-
 
 def distinguish_states(group, automaton, partition):
     split = {}
