@@ -1,73 +1,73 @@
-from semantics.utils import Scope
+from common.semantic import Scope
 from typing import List, Tuple
 
 class Node():
     def __init__(self):
         self.scope: Scope
-
+ 
 class DefNode(Node):
     pass
 
 class ExprNode(Node):
     pass
 
-class ExprBlockNode(ExprNode):
+class ExprBlockNode(ExprNode):           
     def __init__(self, expr_list):
         super().__init__()
         self.expr_list = expr_list
 
-class AtomicNode(ExprNode):
+class AtomicNode(ExprNode):         
     def __init__(self, lex):
         super().__init__()
         self.lex = lex
 
-class BinaryNode(ExprNode):
+class BinaryNode(ExprNode):         
     def __init__(self, lvalue, rvalue):
         super().__init__()
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = None
 
-class UnaryNode(ExprNode):
+class UnaryNode(ExprNode):          
     def __init__(self, operand):
         super().__init__()
         self.operand = operand
         self.oper = None
 
-class ConstNumNode(AtomicNode):
+class ConstNumNode(AtomicNode):          
     pass
 
-class ConstBoolNode(AtomicNode):
+class ConstBoolNode(AtomicNode):         
     pass
 
-class ConstStrNode(AtomicNode):
+class ConstStrNode(AtomicNode):          
     pass
 
-class VarNode(AtomicNode):
+class VarNode(AtomicNode):              
     pass
 
-class StrBinaryNode(BinaryNode):
+class StrBinaryNode(BinaryNode):           
     pass
 
-class BoolBinaryNode(BinaryNode):
+class BoolBinaryNode(BinaryNode):          
     pass
 
-class ArithmeticExprNode(BinaryNode):
+class ArithmeticExprNode(BinaryNode):      
     pass
 
-class EqualityExprNode(BinaryNode):
+class EqualityExprNode(BinaryNode):        
     pass
 
-class InequalityExprNode(BinaryNode):
+class InequalityExprNode(BinaryNode):      
     pass
 
-class NotNode(UnaryNode):
+class NotNode(UnaryNode):                
     pass
 
-class NegNode(UnaryNode):
+class NegNode(UnaryNode):               
     pass
 
-class ProgramNode(Node):
+class ProgramNode(Node):                
     # def_list: List[DefNode]
     # expr: ExprNode
     def __init__(self, def_list, expr):
@@ -86,7 +86,7 @@ class FuncDefNode(DefNode):
 class TypeDefNode(DefNode):                      
     def __init__(self, idx, args, body, parent_type, parent_args=None):
         super().__init__()
-        self.idx = idx
+        self.id = idx
         self.param_ids, self.param_types = zip(*args) if args else (None, None)
         self.method_list = [method for method in body if isinstance(method, MethodDefNode)]
         self.attr_list = [attr for attr in body if isinstance(attr, AttrDefNode)]
@@ -111,18 +111,16 @@ class AttrDefNode(DefNode):
 class InstantiationNode(ExprNode):
     def __init__(self, idx, args):
         super().__init__()
-        self.idx = idx
+        self.id = idx
         self.args = args
 
 class IfElseNode(ExprNode):                         
     def __init__(self, if_stmts: List[Tuple], else_expr):
         super().__init__()
-        cond_list, expr_list = zip(*if_stmts)
-        self.cond_list = cond_list
-        self.expr_list = expr_list
+        self.if_stmts = if_stmts
         self.else_expr = else_expr
 
-class WhileNode(ExprNode):
+class WhileNode(ExprNode):              
     def __init__(self, cond, expr):
         super().__init__()
         self.cond = cond
@@ -135,17 +133,17 @@ class ForNode(ExprNode):
         self.iter = iter
         self.expr = expr
 
-class LetInNode(ExprNode):
+class LetInNode(ExprNode):              
     def __init__(self, var_defs, body):
         super().__init__()
-        self.var_defs = var_defs
-        self.body = body
+        self.var_defs : List[VarDefNode] = var_defs
+        self.body : ExprNode = body
 
-class VarDefNode(DefNode):
+class VarDefNode(DefNode):              
     def __init__(self, idx, expr, type_=None):
         super().__init__()
         self.id = idx
-        self.expr = expr
+        self.expr: ExprNode = expr
         self.type_ = type_    
 
 class DestructiveAssignNode(ExprNode):
@@ -154,13 +152,13 @@ class DestructiveAssignNode(ExprNode):
         self.var = var
         self.expr = expr       
 
-class IsNode(ExprNode):
+class IsNode(ExprNode):                  
     def __init__(self, expr, type_):
         super().__init__()
         self.expr = expr
         self.type_ = type_                       
 
-class AsNode(ExprNode):
+class AsNode(ExprNode):                  
     def __init__(self, expr, type_):
         super().__init__()
         self.expr = expr               
@@ -169,7 +167,7 @@ class AsNode(ExprNode):
 class FuncCallNode(ExprNode):
     def __init__(self, idx, args):
         super().__init__()
-        self.idx = idx
+        self.id = idx
         self.args = args
 
 class AttrCallNode(ExprNode):
@@ -178,91 +176,92 @@ class AttrCallNode(ExprNode):
         self.obj = obj
         self.attr = attr
 
-class MethodCallNode(ExprNode):
-    def __init__(self, obj, method, args):
+class MethodCallNode(ExprNode):         
+    def __init__(self, obj, method_idx, args):
         super().__init__()
         self.obj = obj
-        self.method = method
+        self.method_id = method_idx
         self.args = args
 
 class BaseCallNode(ExprNode):
     def __init__(self, args):
         super().__init__()
         self.args = args
-        self.method_idx = None         
+        self.method_id = None         
         self.parent_type = None
 
 ####################        OPS
-class AddNode(ArithmeticExprNode):
+class AddNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '+'
 
-class SubNode(ArithmeticExprNode):
+class SubNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '-'
 
-class MulNode(ArithmeticExprNode):
+class MulNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '*'
 
-class DivNode(ArithmeticExprNode):
+class DivNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '/'
 
-class ModNode(ArithmeticExprNode):
+class ModNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '%'
 
-class PowNode(ArithmeticExprNode):
+class PowNode(ArithmeticExprNode):              
     def __init__(self, lvalue, rvalue, oper):
         super().__init__(lvalue, rvalue)
         self.oper = oper
-class EqualNode(EqualityExprNode):
+
+class EqualNode(EqualityExprNode):                              
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '=='
 
-class NotEqualNode(EqualityExprNode):
+class NotEqualNode(EqualityExprNode):            
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '!='
 
-class LessThanNode(InequalityExprNode):
+class LessThanNode(InequalityExprNode):          
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '<'
 
-class GreaterThanNode(InequalityExprNode):
+class GreaterThanNode(InequalityExprNode):          
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '>'
 
-class LessOrEqualNode(InequalityExprNode):
+class LessOrEqualNode(InequalityExprNode):      
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '<='
 
-class GreaterOrEqualNode(InequalityExprNode):
+class GreaterOrEqualNode(InequalityExprNode):       
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '>='
 
-class OrNode(BoolBinaryNode):
+class OrNode(BoolBinaryNode):                   
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '|'
 
-class AndNode(BoolBinaryNode):
+class AndNode(BoolBinaryNode):                  
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '&'
 
-class ConcatNode(StrBinaryNode):
+class ConcatNode(StrBinaryNode):                
     def __init__(self, lvalue, rvalue):
         super().__init__(lvalue, rvalue)
         self.oper = '(@, @@)'
