@@ -26,8 +26,8 @@ class Method:
         self.return_type = return_type
 
     def __str__(self):
-        params = ', '.join(f'{n}:{t.name}' for n,t in zip(self.param_names, self.param_types))
-        return f'[method] {self.name}({params}): {self.return_type.name};'
+        params = ', '.join(f'{n} : {t.name}' for n,t in zip(self.param_names, self.param_types))
+        return f'[method] {self.name}({params}) : {self.return_type.name};'
 
     def __eq__(self, other):
         return other.name == self.name and \
@@ -37,6 +37,8 @@ class Method:
 class Type:
     def __init__(self, name:str):
         self.name = name
+        self.param_ids = []
+        self.param_types = []
         self.attributes = []
         self.methods = []
         self.parent = None
@@ -105,7 +107,10 @@ class Type:
         return False
 
     def __str__(self):
-        output = f'type {self.name}'
+        output = f'type {self.name}('
+        params = '' if not self.param_ids else ', '.join(
+            [f"{param_id} : {param_type.name}" for param_id, param_type in zip(self.param_ids, self.param_types)])
+        output += params + ')'
         parent = '' if self.parent is None else f' : {self.parent.name}'
         output += parent
         output += ' {'
@@ -133,6 +138,13 @@ class ErrorType(Type):
     def __eq__(self, other):
         return isinstance(other, Type)
 
+class AutoType(Type):
+    def __init__(self):
+        Type.__init__(self, '<auto>')
+
+    def __eq__(self, other):
+        return isinstance(other, AutoType) or other.name == self.name
+
 class VoidType(Type):
     def __init__(self):
         Type.__init__(self, '<void>')
@@ -153,9 +165,24 @@ class IntType(Type):
     def __eq__(self, other):
         return other.name == self.name or isinstance(other, IntType)
 
+class Function:
+    def __init__(self, name, param_names, param_types, return_type):
+        self.name = name
+        self.param_names = param_names
+        self.param_types = param_types
+        self.return_type = return_type
+
+    def __str__(self):
+        params = ', '.join(f'{n} : {t.name}' for n, t in zip(self.param_names, self.param_types))
+        return '\n' + f'function {self.name}({params}) : {self.return_type.name};' + '\n'
+
+    def __eq__(self, other):
+        return other.name == self.name and other.return_type == self.return_type and other.param_types == self.param_types
+
 class Context:
     def __init__(self):
         self.types = {}
+        self.functions = {}
 
     def create_type(self, name:str):
         if name in self.types:
@@ -168,9 +195,22 @@ class Context:
             return self.types[name]
         except KeyError:
             raise SemanticError(f'Type "{name}" is not defined.')
+        
+    def create_function(self, name: str, params_names: list, params_types: list, return_type):
+        if name in self.functions:
+            raise SemanticError(f'Function with the same name ({name}) already in context.')
+        function = self.functions[name] = Function(name, params_names, params_types, return_type)
+        return function
+
+    def get_function(self, name: str):
+        try:
+            return self.functions[name]
+        except KeyError:
+            raise SemanticError(f'Function "{name}" is not defined.')
 
     def __str__(self):
-        return '{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) + '\n}'
+        return ('{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
+                '\n\t'.join(y for x in self.functions.values() for y in str(x).split('\n')) + '\n}')
 
     def __repr__(self):
         return str(self)
