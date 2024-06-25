@@ -1,5 +1,5 @@
 from common.pycompiler import Grammar
-import semantics.hulk_ast as ast
+from semantics.hulk_ast import *
 
 # grammar
 G = Grammar()
@@ -17,7 +17,7 @@ lego_expr, paren_expr, atom = G.NonTerminals('<lego-expr> <paren-expr> <atom>')
 
 # Sentencias (Statements)
 let_in_stmt, var_defs, typed_var, while_stmt, for_stmt = G.NonTerminals('<let-in-stmt> <var-defs> <typed-var> <while-stmt> <for-stmt>')
-if_else_stmt, elif_stmts, d_assign, member_call, func_call = G.NonTerminals('<if-else-stmt> <elif-stmts> <d-assign> <member-call> <fun-call>')
+if_else_stmt, elif_stmts, d_assign, method_call, func_call = G.NonTerminals('<if-else-stmt> <elif-stmts> <d-assign> <method-call> <fun-call>')
                                                                             
 # Parametros y Tipos 
 params_list, params_list_eps, typed_param = G.NonTerminals('<params-list> <params-list-eps> <typed-param>')
@@ -48,10 +48,10 @@ s_colon, colon, comma, dot, opar, cpar, ocur, ccur = G.Terminals('; : , . ( ) { 
 
 ########### productions
 
-program %= definition_list + simple_expr, lambda h,s: ast.ProgramNode(s[1], s[2])
-program %= definition_list + lego_expr, lambda h,s: ast.ProgramNode(s[1], s[2])
-program %= simple_expr, lambda h,s: ast.ProgramNode([], s[1])
-program %= lego_expr, lambda h,s: ast.ProgramNode([], s[1])
+program %= definition_list + simple_expr, lambda h,s: ProgramNode(s[1], s[2])
+program %= definition_list + lego_expr, lambda h,s: ProgramNode(s[1], s[2])
+program %= simple_expr, lambda h,s: ProgramNode([], s[1])
+program %= lego_expr, lambda h,s: ProgramNode([], s[1])
 
 definition_list %= definition + definition_list, lambda h,s: [s[1]] + s[2]
 definition_list %= definition, lambda h,s: [s[1]] 
@@ -67,8 +67,9 @@ simple_expr %= while_stmt, lambda h, s: s[1]
 simple_expr %= for_stmt, lambda h, s: s[1]
 simple_expr %= if_else_stmt, lambda h, s: s[1]
 simple_expr %= d_assign_op, lambda h, s: s[1]
+simple_expr %= or_op, lambda h, s: s[1]
 
-block_expr %= ocur + expr_list + ccur, lambda h,s: ast.ExprBlockNode(s[2])
+block_expr %= ocur + expr_list + ccur, lambda h,s: ExprBlockNode(s[2])
 
 lego_expr %= expr + s_colon, lambda h,s: s[1]
 lego_expr %= block_expr, lambda h,s: s[1]
@@ -88,15 +89,15 @@ expr_list_comma %= expr + comma + expr_list_comma, lambda h, s: [s[1]] + s[3]
 #func definitions
 func_def %= (
     function + idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h, s: ast.FuncDefNode(s[2], s[4], s[8], s[6]))
+    lambda h, s: FuncDefNode(s[2], s[4], s[8], s[6]))
 
 func_def %= (
     function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6]))
+    lambda h,s: FuncDefNode(s[2], s[4], s[7], s[6]))
 
 func_def %= (
     function + idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
-    lambda h,s: ast.FuncDefNode(s[2], s[4], s[7], s[6]))
+    lambda h,s: FuncDefNode(s[2], s[4], s[7], s[6]))
 
 params_list_eps %= params_list, lambda h,s: s[1]
 params_list_eps %= G.Epsilon, lambda h,s: []
@@ -111,14 +112,14 @@ opt_typing %= colon + idx, lambda h, s: s[2]
 
 #type definition
 type_def %= type_ + idx + type_params_eps + inherit_eps + ocur + type_def_body + ccur, lambda h, s: (
-    ast.TypeDefNode(s[2], s[3], s[6], s[4])
+    TypeDefNode(s[2], s[3], s[6], s[4])
 )
 
 type_def %= type_ + idx + type_params_eps + inherits + idx + opar + expr_list_comma_eps + cpar + ocur + type_def_body + ccur, lambda h, s: (
-    ast.TypeDefNode(s[2], s[3], s[10], s[5], s[7])
+    TypeDefNode(s[2], s[3], s[10], s[5], s[7])
 )
 
-inherit_eps %= G.Epsilon, lambda h, s: []
+inherit_eps %= G.Epsilon, lambda h, s: None
 inherit_eps %= inherits + idx, lambda h, s: s[2]
 
 type_params_eps %= opar + params_list_eps + cpar, lambda h, s: s[2]
@@ -133,111 +134,119 @@ member_def %= attr_def, lambda h, s: s[1]
 #methods
 method_def %= (
     idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
-    lambda h,s: ast.MethodDefNode(s[1], s[3], s[7], s[5])                     
+    lambda h,s: MethodDefNode(s[1], s[3], s[7], s[5])                     
 )
 
 method_def %= (
     idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
-    lambda h,s: ast.MethodDefNode(s[1], s[3], s[6], s[5])                 
+    lambda h,s: MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
 method_def %= (
     idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
-    lambda h,s: ast.MethodDefNode(s[1], s[3], s[6], s[5])                 
+    lambda h,s: MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
 #attributes
-attr_def %= idx + opt_typing + equal + lego_expr, lambda h, s: ast.AttrDefNode(s[1], s[4], s[2])
+attr_def %= idx + opt_typing + equal + lego_expr, lambda h, s: AttrDefNode(s[1], s[4], s[2])
 
 ##### statements
 
 #letin
-let_in_stmt %= let + var_defs + in_ + expr, lambda h, s: ast.LetInNode(s[2], s[4])
+let_in_stmt %= let + var_defs + in_ + expr, lambda h, s: LetInNode(s[2], s[4])
 
 var_defs %= typed_var + comma + var_defs, lambda h, s: [s[1]] + s[3]
 var_defs %= typed_var, lambda h, s: [s[1]]
 
-typed_var %= idx + opt_typing + equal + expr, lambda h, s: ast.VarDefNode(s[1], s[4], s[2])
+typed_var %= idx + opt_typing + equal + expr, lambda h, s: VarDefNode(s[1], s[4], s[2])
  
 #if_else
-if_else_stmt %= if_ + opar + expr + cpar + expr + elif_stmts + else_ + expr, lambda h, s: ast.IfElseNode([(s[3], s[5])] + s[6], s[8])
+if_else_stmt %= if_ + opar + expr + cpar + expr + elif_stmts + else_ + expr, lambda h, s: IfElseNode([(s[3], s[5])] + s[6], s[8])
 
 elif_stmts %= elif_ + opar + expr + cpar + expr + elif_stmts, lambda h, s: [(s[3], s[5])] + s[6]
 elif_stmts %= G.Epsilon, lambda h, s: []
 
 #loopsssss
-while_stmt %= while_ + opar + expr + cpar + expr, lambda h, s: ast.WhileNode(s[3], s[5])
-for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: ast.ForNode(s[3], s[5], s[7])
+while_stmt %= while_ + opar + expr + cpar + expr, lambda h, s: WhileNode(s[3], s[5])
+for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: ForNode(s[3], s[5], s[7])
+# for_stmt %= for_ + opar + idx + in_ + func_call + cpar + expr, lambda h, s: LetInNode([VarDefNode("iterable",InstantiationNode(s[5].idx,s[5].args))],WhileNode(MethodCallNode("iterable","next",[]),LetInNode([VarDefNode(idx,MethodCallNode("iterable","current",[]))],s[7])))
 
 #func_call
-func_call %= idx + opar + expr_list_comma_eps + cpar, lambda h, s: ast.FuncCallNode(s[1], s[3])
+func_call %= idx + opar + expr_list_comma_eps + cpar, lambda h, s: FuncCallNode(s[1], s[3])
+
+#d_assign
+d_assign_op %= idx + d_assign + expr, lambda h, s: DestructiveAssignNode(s[1], s[3])
+d_assign_op %= idx + dot + idx + d_assign + expr, lambda h, s: AttrAssignNode(s[1], s[3], s[5]) 
+# idx := expr | idx . idx := expr
 
 #hierarchy
-#destructive assignment has right asociation 
-d_assign_op %= or_op + d_assign + d_assign_op, lambda h, s: ast.DestructiveAssignNode(s[1], s[3])
-d_assign_op %= or_op, lambda h, s: s[1]
-
-or_op %= or_op + or_ + and_op, lambda h, s: ast.OrNode(s[1], s[3])
+or_op %= or_op + or_ + and_op, lambda h, s: OrNode(s[1], s[3])
 or_op %= and_op, lambda h, s: s[1]
 
-and_op %= and_op + and_ + eq_op, lambda h, s: ast.AndNode(s[1], s[3])
+and_op %= and_op + and_ + eq_op, lambda h, s: AndNode(s[1], s[3])
 and_op %= eq_op, lambda h, s: s[1]
 
-eq_op %= eq_op + eq + ineq_op, lambda h, s: ast.EqualNode(s[1], s[3])
-eq_op %= eq_op + neq + ineq_op, lambda h, s: ast.NotEqualNode(s[1], s[3])
+eq_op %= eq_op + eq + ineq_op, lambda h, s: EqualNode(s[1], s[3])
+eq_op %= eq_op + neq + ineq_op, lambda h, s: NotEqualNode(s[1], s[3])
 eq_op %= ineq_op, lambda h, s: s[1]
 
-ineq_op %= ineq_op + le + type_test_op, lambda h, s: ast.LessOrEqualNode(s[1], s[3])
-ineq_op %= ineq_op + ge + type_test_op, lambda h, s: ast.GreaterOrEqualNode(s[1], s[3])
-ineq_op %= ineq_op + lt + type_test_op, lambda h, s: ast.LessThanNode(s[1], s[3])
-ineq_op %= ineq_op + gt + type_test_op, lambda h, s: ast.GreaterThanNode(s[1], s[3])
+ineq_op %= ineq_op + le + type_test_op, lambda h, s: LessOrEqualNode(s[1], s[3])
+ineq_op %= ineq_op + ge + type_test_op, lambda h, s: GreaterOrEqualNode(s[1], s[3])
+ineq_op %= ineq_op + lt + type_test_op, lambda h, s: LessThanNode(s[1], s[3])
+ineq_op %= ineq_op + gt + type_test_op, lambda h, s: GreaterThanNode(s[1], s[3])
 ineq_op %= type_test_op, lambda h, s: s[1]
 
-type_test_op %= concat_op + is_ + idx, lambda h, s: ast.IsNode(s[1], s[3])
-type_test_op %= concat_op + as_ + idx, lambda h, s: ast.AsNode(s[1], s[3])
+type_test_op %= concat_op + is_ + idx, lambda h, s: IsNode(s[1], s[3])
+type_test_op %= concat_op + as_ + idx, lambda h, s: AsNode(s[1], s[3])
 type_test_op %= concat_op, lambda h, s: s[1]
 
-concat_op %= concat_op + at + add_sub_op,  lambda h, s: ast.ConcatNode(s[1], s[3])
-concat_op %= concat_op + double_at + add_sub_op, lambda h, s: ast.ConcatNode(s[1], ast.ConcatNode(ast.ConstStrNode("\" \""),s[3]))
+concat_op %= concat_op + at + add_sub_op,  lambda h, s: ConcatNode(s[1], s[3])
+concat_op %= concat_op + double_at + add_sub_op, lambda h, s: ConcatNode(s[1], ConcatNode(ConstStrNode("\" \""),s[3]))
 concat_op %= add_sub_op, lambda h, s: s[1]
 
-add_sub_op %= add_sub_op + plus + mul_div_op, lambda h, s: ast.AddNode(s[1], s[3])
-add_sub_op %= add_sub_op + minus + mul_div_op, lambda h, s: ast.SubNode(s[1], s[3])
+add_sub_op %= add_sub_op + plus + mul_div_op, lambda h, s: AddNode(s[1], s[3])
+add_sub_op %= add_sub_op + minus + mul_div_op, lambda h, s: SubNode(s[1], s[3])
 add_sub_op %= mul_div_op, lambda h, s: s[1]
 
-mul_div_op %= mul_div_op + star + neg_op, lambda h, s: ast.MulNode(s[1], s[3])
-mul_div_op %= mul_div_op + div + neg_op, lambda h, s: ast.DivNode(s[1], s[3])
-mul_div_op %= mul_div_op + mod + neg_op, lambda h, s: ast.ModNode(s[1], s[3])
+mul_div_op %= mul_div_op + star + neg_op, lambda h, s: MulNode(s[1], s[3])
+mul_div_op %= mul_div_op + div + neg_op, lambda h, s: DivNode(s[1], s[3])
+mul_div_op %= mul_div_op + mod + neg_op, lambda h, s: ModNode(s[1], s[3])
 mul_div_op %= neg_op, lambda h, s: s[1]
 
 #neg stands for negation
-neg_op %= minus + pow_op, lambda h, s: ast.NegNode(s[2])
+neg_op %= minus + pow_op, lambda h, s: NegNode(s[2])
 neg_op %= pow_op, lambda h, s: s[1]
 
 #pow has right asociation 
-pow_op %= inst_op + pow + pow_op, lambda h, s: ast.PowNode(s[1], s[3], s[2])
-pow_op %= inst_op + pow2 + pow_op, lambda h, s: ast.PowNode(s[1], s[3], s[2])
+pow_op %= inst_op + pow + pow_op, lambda h, s: PowNode(s[1], s[3], s[2])
+pow_op %= inst_op + pow2 + pow_op, lambda h, s: PowNode(s[1], s[3], s[2])
 pow_op %= inst_op, lambda h, s: s[1]
 
 #inst stands for instantiation
-inst_op %= new + idx + opar + expr_list_comma_eps + cpar, lambda h, s: ast.InstantiationNode(s[2], s[4])
+inst_op %= new + idx + opar + expr_list_comma_eps + cpar, lambda h, s: InstantiationNode(s[2], s[4])
 inst_op %= not_op, lambda h, s: s[1]
 
-not_op %= not_ + member_call, lambda h, s: ast.NotNode(s[2])
-not_op %= member_call, lambda h, s: s[1]
-
-member_call %= member_call + dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s: ast.MethodCallNode(s[1], s[3], s[5])
-member_call %= member_call + dot + idx, lambda h, s: ast.AttrCallNode(s[1], s[3])
-member_call %= paren_expr, lambda h, s: s[1]
+not_op %= not_ + paren_expr, lambda h, s: NotNode(s[2])
+not_op %= paren_expr, lambda h, s: s[1]
 
 #parenthesized expression
 paren_expr %= opar + expr + cpar, lambda h, s: s[2]
 paren_expr %= atom, lambda h, s: s[1]
+ 
+method_call %= method_call +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
+method_call %= func_call +       dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
+method_call %= base + opar + expr_list_comma_eps + cpar +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h,s :  MethodCallNode(BaseCallNode(s[3]),s[6],s[8])
+method_call %= idx +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
+method_call %= idx + dot + idx +       dot + idx + opar + expr_list_comma_eps + cpar,lambda h, s :  MethodCallNode(AttrCallNode(s[1],s[3]),s[5],s[7])
+method_call %= opar + expr + cpar +      dot + idx + opar + expr_list_comma_eps + cpar,lambda h, s :  MethodCallNode(s[2],s[5],s[7])
 
-atom %= idx, lambda h, s: ast.VarNode(s[1])
-atom %= number_lit, lambda h, s: ast.ConstNumNode(s[1])
-atom %= bool_lit, lambda h, s: ast.ConstBoolNode(s[1])
-atom %= string_lit, lambda h, s: ast.ConstStrNode(s[1])
+atom %= idx, lambda h, s: VarNode(s[1])
+atom %= number_lit, lambda h, s: ConstNumNode(s[1])
+atom %= bool_lit, lambda h, s: ConstBoolNode(s[1])
+atom %= string_lit, lambda h, s: ConstStrNode(s[1])
 atom %= func_call, lambda h, s: s[1]
-atom %= base + opar + expr_list_comma_eps + cpar, lambda h, s:  ast.BaseCallNode(s[3])
+atom %= base + opar + expr_list_comma_eps + cpar, lambda h, s:  BaseCallNode(s[3])
+
+atom %= method_call, lambda h, s: s[1]      #
+atom %= idx + dot + idx , lambda h, s: AttrCallNode(s[1], s[3])     # attr_call
 

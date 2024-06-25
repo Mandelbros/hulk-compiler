@@ -12,14 +12,14 @@ class Regex():
         self.automaton = self.regex_automaton()
         pass
     
-    def regex_tokenizer(self,skip_whitespaces=True):
+    def regex_tokenizer(self, skip_whitespaces=True):
         tokens = []
 
         fixed_tokens = {lex: Token(lex, G[lex]) for lex in '| * ( ) symbol ε + - ? [ ]'.split()}
         
         is_symbol_set = is_escape = False
         for char in self.text:
-            # if skip_whitespaces and char.isspace():
+            # if skip_whitespaces and char.isspace():                       ?
             #     continue
             
             if is_escape:

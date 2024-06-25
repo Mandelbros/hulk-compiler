@@ -7,6 +7,7 @@ class Lexer:
         self.eof = eof
         self.regexs = self._build_regexs(table)
         self.automaton = self._build_automaton()
+        # print(self.automaton)
     
     def _build_regexs(self, table):
         regexs = []

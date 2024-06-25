@@ -16,6 +16,8 @@ def run_pipeline(file_path):
 
     print('✅ OK')
 
+    # return
+
     ### PARSING PHASE
     parser = LR1Parser(G)
 
