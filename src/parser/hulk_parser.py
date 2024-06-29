@@ -12,17 +12,17 @@ class HulkParser(LR1Parser):
             super().__init__(hulk_grammar)
         else:
             try:
-                with open('cache/parser_action_table.pkl', 'rb') as action_pkl:
+                with open('src/cache/parser_action_table.pkl', 'rb') as action_pkl:
                     self.action = dill.load(action_pkl)
-                with open('cache/parser_goto_table.pkl', 'rb') as goto_pkl:
+                with open('src/cache/parser_goto_table.pkl', 'rb') as goto_pkl:
                     self.goto = dill.load(goto_pkl)
             except:
                 super().__init__(hulk_grammar) 
 
         if save:
-            with open('cache/parser_action_table.pkl', 'wb') as action_pkl:
+            with open('src/cache/parser_action_table.pkl', 'wb') as action_pkl:
                 dill.dump(self.action, action_pkl)
-            with open('cache/parser_goto_table.pkl', 'wb') as goto_pkl:
+            with open('src/cache/parser_goto_table.pkl', 'wb') as goto_pkl:
                 dill.dump(self.goto, goto_pkl)
 
     def __call__(self, tokens: List[Token]):

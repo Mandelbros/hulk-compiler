@@ -2,27 +2,29 @@ from common.utils import Token, UnknownToken
 from common.state import State
 from lexer.regex import Regex
 from common.errors import HulkLexerError
+from lexer.regex_table  import table as regex_table
+from parser.hulk_grammar import G as hulk_grammar
 import dill
 
 class Lexer:
-    def __init__(self, table, eof, rebuild=False, save=False):
-        self.eof = eof
+    def __init__(self, rebuild=False, save=False):
+        self.eof = hulk_grammar.EOF
         self.regexs = None
         self.automaton = None
 
         if rebuild:
-            self.regexs = self._build_regexs(table)
+            self.regexs = self._build_regexs(regex_table)
             self.automaton = self._build_automaton()
         else:
             try:
-                with open('cache/lexer_automaton.pkl', 'rb') as automaton_pkl:
+                with open('src/cache/lexer_automaton.pkl', 'rb') as automaton_pkl:
                     self.automaton = dill.load(automaton_pkl)
             except:
-                self.regexs = self._build_regexs(table)
+                self.regexs = self._build_regexs(regex_table)
                 self.automaton = self._build_automaton() 
         
         if save:
-             with open('cache/lexer_automaton.pkl', 'wb') as automaton_pkl:
+             with open('src/cache/lexer_automaton.pkl', 'wb') as automaton_pkl:
                 dill.dump(self.automaton, automaton_pkl)
 
 
