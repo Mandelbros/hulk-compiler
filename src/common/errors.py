@@ -1,3 +1,5 @@
+
+
 class HulkError(Exception):
     def __init__(self, text):
         super().__init__(text)
@@ -30,3 +32,19 @@ class HulkParserError(HulkError):
     @property
     def error_type(self):
         return 'ParserError'
+    
+
+class HulkLexerError(HulkError):            
+    def __init__(self, text, row, col):
+        super().__init__(text)
+        self.row = row
+        self.col = col
+
+    def __str__(self):
+        return f'({self.row}, {self.col}) - {self.error_type}: {self.text}'
+
+    UNKNOWN_TOKEN = 'Unknown token \'%s\'.' 
+
+    @property
+    def error_type(self):
+        return 'LexerError'

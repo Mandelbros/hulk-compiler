@@ -14,13 +14,20 @@ def run_pipeline(file_path):
         text = file.read()
 
     ### TOKENIZATION PHASE
-    lexer = Lexer(table, G.EOF, rebuild=False)
+    lexer = Lexer(table, G.EOF, rebuild=False, save=False)
     tokens = lexer(text)
+
+    tokens, lexer_errors = lexer(text)
+
+    if lexer_errors:
+        for err in lexer_errors:
+            prompt_error(err)
+        return
 
     print('✅ LEXER - OK')
 
     ### PARSING PHASE
-    parser = HulkParser(rebuild=False, save=True)
+    parser = HulkParser(rebuild=False, save=False)
     out, oper, parser_errors = parser(tokens)
 
     if parser_errors:

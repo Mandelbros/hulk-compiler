@@ -1,10 +1,11 @@
-from common.utils import Token
+from common.utils import Token, UnknownToken
 from common.state import State
 from lexer.regex import Regex
+from common.errors import HulkLexerError
 import dill
 
 class Lexer:
-    def __init__(self, table, eof, rebuild=True):
+    def __init__(self, table, eof, rebuild=False, save=False):
         self.eof = eof
         self.regexs = None
         self.automaton = None
@@ -12,15 +13,18 @@ class Lexer:
         if rebuild:
             self.regexs = self._build_regexs(table)
             self.automaton = self._build_automaton()
-
-            with open('cache/lexer_automaton.pkl', 'wb') as automaton_pkl:
-                dill.dump(self.automaton, automaton_pkl)
         else:
             try:
                 with open('cache/lexer_automaton.pkl', 'rb') as automaton_pkl:
                     self.automaton = dill.load(automaton_pkl)
             except:
-                pass  # ERROR, Lexer automaton file not found
+                self.regexs = self._build_regexs(table)
+                self.automaton = self._build_automaton() 
+        
+        if save:
+             with open('cache/lexer_automaton.pkl', 'wb') as automaton_pkl:
+                dill.dump(self.automaton, automaton_pkl)
+
 
     def _build_regexs(self, table):
         regexs = []
@@ -72,9 +76,10 @@ class Lexer:
 
             final_state, final_lex = self._walk(text)
 
-            if len(final_lex) == 0:
-                print("error. aborting")
-                return  # ERROR
+            if len(final_lex) == 0: 
+                yield text[0], None, row, col  
+                text = text[1:] 
+                continue
 
             bst, ttype = float('inf'), None
             for st in final_state.state:
@@ -88,5 +93,15 @@ class Lexer:
 
         yield '$', self.eof, row, col
 
-    def __call__(self, text):
-        return [Token(lex, ttype, row, col) for lex, ttype, row, col in self._tokenize(text)]
+    def __call__(self, text): 
+        tokens = [Token(lex, ttype, row, col) if ttype is not None else UnknownToken(lex, row, col) for
+                lex, ttype, row, col in self._tokenize(text)]
+        
+        errors = []
+
+        for token in tokens:
+            if not token.is_valid:
+                error_text = HulkLexerError.UNKNOWN_TOKEN % token.lex
+                errors.append(HulkLexerError(error_text, token.row, token.col))
+                 
+        return tokens, errors
