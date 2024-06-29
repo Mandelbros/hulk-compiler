@@ -2,18 +2,37 @@ from common.pycompiler import Item
 from common.state import State, multiline_formatter
 from common.utils import compute_firsts, compute_local_first
 from common.utils import ContainerSet
+import dill
 
 class ShiftReduceParser:
     SHIFT = 'SHIFT'
     REDUCE = 'REDUCE'
     OK = 'OK'
 
-    def __init__(self, G, verbose=False):
+    def __init__(self, G, verbose=False, rebuild=True, save=False):
         self.G = G
         self.verbose = verbose
-        self.action = {}
-        self.goto = {}
-        self._build_parsing_table()
+        self.action = None
+        self.goto = None
+
+        if rebuild:
+            self.action = {}
+            self.goto = {}
+            self._build_parsing_table()
+            if save:
+                with open('cache/parser_action_table.pkl', 'wb') as table_pkl:
+                    dill.dump(self.action, table_pkl)
+                with open('cache/parser_goto_table.pkl', 'wb') as table_pkl:
+                    dill.dump(self.goto, table_pkl)
+        else:
+            try:
+                with open('cache/parser_action_table.pkl', 'rb') as table_pkl:
+                    self.action = dill.load(table_pkl)
+                with open('cache/parser_goto_table.pkl', 'rb') as table_pkl:
+                    self.goto = dill.load(table_pkl)
+            except:
+                pass    #ERROR, Lexer automaton file not found                      #error
+
 
     def _build_parsing_table(self):
         raise NotImplementedError()

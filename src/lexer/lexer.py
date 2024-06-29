@@ -20,7 +20,7 @@ class Lexer:
                 with open('cache/lexer_automaton.pkl', 'rb') as automaton_pkl:
                     self.automaton = dill.load(automaton_pkl)
             except:
-                pass    #ERROR, Lexer automaton file not found                                                             #ERROR
+                pass    #ERROR, Lexer automaton file not found                      #error                                                      #ERROR
     
     def _build_regexs(self, table):
         regexs = []
