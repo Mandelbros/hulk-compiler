@@ -1,9 +1,13 @@
 from lexer.regex_table  import table
 from lexer.lexer import Lexer
 from parser.hulk_grammar import G
-from parser.parsing_tools import LR1Parser
+from parser.hulk_parser import HulkParser
 from common.evaluation import evaluate_reverse_parse
 from semantics.semantic_check_pipeline import semantic_check_pipeline
+from termcolor import colored
+
+def prompt_error(message):
+    print(colored(message, 'red'))
 
 def run_pipeline(file_path): 
     with open(file_path, 'r') as file:
@@ -12,18 +16,21 @@ def run_pipeline(file_path):
     ### TOKENIZATION PHASE
     lexer = Lexer(table, G.EOF, rebuild=False)
     tokens = lexer(text)
-    ttypes = [token.token_type for token in tokens]
 
-    print('✅ OK')
-
-    print(tokens)
+    print('✅ LEXER - OK')
 
     ### PARSING PHASE
-    parser = LR1Parser(G, rebuild=False, save=True)
-    out, oper = parser(ttypes)
+    parser = HulkParser(rebuild=False, save=True)
+    out, oper, parser_errors = parser(tokens)
+
+    if parser_errors:
+        for err in parser_errors:
+            prompt_error(err)
+        return
+
     ast = evaluate_reverse_parse(out,oper,tokens)
 
-    print('✅ OK') 
+    print('✅ PARSER - OK') 
 
     ### SEMANTIC CHECK
     ast, errors, context = semantic_check_pipeline(ast, True)
