@@ -19,6 +19,7 @@ class ShiftReduceParser:
             self.action = {}
             self.goto = {}
             self._build_parsing_table()
+            
             if save:
                 with open('cache/parser_action_table.pkl', 'wb') as table_pkl:
                     dill.dump(self.action, table_pkl)

@@ -16,6 +16,8 @@ def run_pipeline(file_path):
 
     print('✅ OK')
 
+    print(tokens)
+
     ### PARSING PHASE
     parser = LR1Parser(G, rebuild=False, save=True)
     out, oper = parser(ttypes)
@@ -33,5 +35,5 @@ def run_pipeline(file_path):
         print(errors)
 
 if __name__ == "__main__":
-    file_path = 'src/test2.hulk' 
+    file_path = 'src/test.hulk' 
     result = run_pipeline(file_path)
