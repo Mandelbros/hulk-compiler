@@ -273,30 +273,4 @@ def compute_firsts(G):
                     
     return firsts
 
-def compute_follows(G, firsts):
-    follows = { }
-    change = True
-    
-    for nonterminal in G.nonTerminals:
-        follows[nonterminal] = ContainerSet()
-    follows[G.startSymbol] = ContainerSet(G.EOF)
-    
-    while change:
-        change = False
-        
-        for production in G.Productions:
-            X = production.Left
-            alpha = production.Right
-            
-            follow_X = follows[X]
-            
-            for i in range(len(alpha)):
-                Y = alpha[i]
-                if Y.IsNonTerminal:
-                    beta = alpha[i + 1:]
-                    firsts_beta = compute_local_first(firsts, beta)
-                    change |= follows[Y].update(firsts_beta)
-                    if firsts_beta.contains_epsilon or len(beta) == 0:
-                        change |= follows[Y].update(follow_X)
-
-    return follows
+ 

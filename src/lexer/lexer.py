@@ -1,13 +1,26 @@
 from common.utils import Token
 from common.state import State
 from lexer.regex import Regex
+import dill
 
 class Lexer:
-    def __init__(self, table, eof):
+    def __init__(self, table, eof, rebuild=True):
         self.eof = eof
-        self.regexs = self._build_regexs(table)
-        self.automaton = self._build_automaton()
-        # print(self.automaton)
+        self.regexs = None
+        self.automaton = None
+
+        if rebuild:
+            self.regexs = self._build_regexs(table)
+            self.automaton = self._build_automaton()
+
+            with open('cache/lexer_automaton.pkl', 'wb') as automaton_pkl:
+                dill.dump(self.automaton, automaton_pkl)
+        else:
+            try:
+                with open('cache/lexer_automaton.pkl', 'rb') as automaton_pkl:
+                    self.automaton = dill.load(automaton_pkl)
+            except:
+                pass    #ERROR, Lexer automaton file not found                                                             #ERROR
     
     def _build_regexs(self, table):
         regexs = []

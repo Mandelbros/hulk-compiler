@@ -1,54 +1,7 @@
-from common.pycompiler import Grammar, Item, Symbol
-from common.state import State, lr0_formatter, multiline_formatter
-from common.utils import compute_firsts, compute_local_first, compute_follows
+from common.pycompiler import Item
+from common.state import State, multiline_formatter
+from common.utils import compute_firsts, compute_local_first
 from common.utils import ContainerSet
-
-def build_LR0_automaton(G):
-    assert len(G.startSymbol.productions) == 1, 'Grammar must be augmented'
-
-    start_production = G.startSymbol.productions[0]
-    start_item = Item(start_production, 0)
-
-    automaton = State(start_item, True)
-
-    pending = [start_item]
-    visited = {start_item: automaton}
-
-    while pending:
-        current_item = pending.pop()
-        if current_item.IsReduceItem:
-            continue
-
-        new_transitions = []
-        new_transitions_eps = []
-        next_symbol = current_item.NextSymbol
-        next_item = current_item.NextItem()
-
-        if next_item not in visited:
-            pending.append(next_item)
-            visited[next_item] = State(next_item, final=True)
-
-        new_transitions.append(next_item)
-
-        if next_symbol.IsNonTerminal:
-            for production in next_symbol.productions:
-                new_item = Item(production, 0)
-
-                if new_item not in visited:
-                    pending.append(new_item)
-                    visited[new_item] = State(new_item, final=True)
-
-                new_transitions_eps.append(new_item)
-
-        current_state = visited[current_item]
-
-        for t in new_transitions:
-            current_state.add_transition(next_symbol.Name, visited[t])
-
-        for t in new_transitions_eps:
-            current_state.add_epsilon_transition(visited[t])
-
-    return automaton
 
 class ShiftReduceParser:
     SHIFT = 'SHIFT'
@@ -70,6 +23,8 @@ class ShiftReduceParser:
         cursor = 0
         output = []
         operations = []
+
+        BORRAME = 0
 
         while True:
             state = stack[-1]
@@ -111,40 +66,6 @@ class ShiftReduceParser:
                 return output, operations
             else:
                 raise Exception('Invalid action!!!')                                # !ERROR!
-
-class SLR1Parser(ShiftReduceParser):
-    def _build_parsing_table(self):
-        G = self.G.AugmentedGrammar(True)
-        firsts = compute_firsts(G)
-        follows = compute_follows(G, firsts)
-
-        automaton = build_LR0_automaton(G).to_deterministic()
-        for i, node in enumerate(automaton):
-            if self.verbose: print(i, '\t', '\n\t '.join(str(x) for x in node.state), '\n')
-            node.idx = i
-
-        for node in automaton:
-            idx = node.idx
-            for state in node.state:
-                item = state.state
-                if item.IsReduceItem:
-                    if item.production.Left == G.startSymbol:
-                        self._register(self.action, (idx, G.EOF), (self.OK, None))
-                    else:
-                        for symbol in follows[item.production.Left]:
-                            self._register(self.action, (idx, symbol), (self.REDUCE, item.production))
-                else:
-                    next_symbol = item.NextSymbol
-                    next_state = node[next_symbol.Name][0].idx
-                    if next_symbol.IsTerminal or next_symbol == G.EOF:
-                        self._register(self.action, (idx, next_symbol), (self.SHIFT, next_state))
-                    if next_symbol.IsNonTerminal:
-                        self._register(self.goto, (idx, next_symbol), next_state)
-
-    @staticmethod
-    def _register(table, key, value):
-        assert key not in table or table[key] == value, 'Shift-Reduce or Reduce-Reduce conflict!!!'                  # !ERROR!
-        table[key] = value
 
 def expand(item, firsts):
     next_symbol = item.NextSymbol

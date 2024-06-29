@@ -87,7 +87,7 @@ class TypeDefNode(DefNode):
     def __init__(self, idx, params, body, parent_type, parent_params=None):
         super().__init__()
         self.id = idx
-        self.param_ids, self.param_types = zip(*params) if params else (None, None)
+        self.param_ids, self.param_types = zip(*params) if params else ([], [])
         self.method_list = [method for method in body if isinstance(method, MethodDefNode)]
         self.attr_list = [attr for attr in body if isinstance(attr, AttrDefNode)]
         self.parent_type = parent_type
@@ -147,9 +147,9 @@ class VarDefNode(DefNode):
         self.type_ = type_    
 
 class DestructiveAssignNode(ExprNode):
-    def __init__(self, var_name, expr):
+    def __init__(self, var, expr):
         super().__init__()
-        self.var_name = var_name
+        self.var:VarNode = var
         self.expr = expr       
 
 class AttrAssignNode(ExprNode):

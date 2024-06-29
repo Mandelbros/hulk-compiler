@@ -175,8 +175,8 @@ for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: ForNode(s
 func_call %= idx + opar + expr_list_comma_eps + cpar, lambda h, s: FuncCallNode(s[1], s[3])
 
 #d_assign
-d_assign_op %= idx + d_assign + expr, lambda h, s: DestructiveAssignNode(s[1], s[3])
-d_assign_op %= idx + dot + idx + d_assign + expr, lambda h, s: AttrAssignNode(s[1], s[3], s[5]) 
+d_assign_op %= idx + d_assign + expr, lambda h, s: DestructiveAssignNode(VarNode(s[1]), s[3])
+d_assign_op %= idx + dot + idx + d_assign + expr, lambda h, s: AttrAssignNode(VarNode(s[1]), s[3], s[5]) 
 # idx := expr | idx . idx := expr
 
 #hierarchy
@@ -236,8 +236,8 @@ paren_expr %= atom, lambda h, s: s[1]
 method_call %= method_call +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
 method_call %= func_call +       dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
 method_call %= base + opar + expr_list_comma_eps + cpar +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h,s :  MethodCallNode(BaseCallNode(s[3]),s[6],s[8])
-method_call %= idx +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(s[1],s[3],s[5])
-method_call %= idx + dot + idx +       dot + idx + opar + expr_list_comma_eps + cpar,lambda h, s :  MethodCallNode(AttrCallNode(s[1],s[3]),s[5],s[7])
+method_call %= idx +      dot + idx + opar + expr_list_comma_eps + cpar, lambda h, s :  MethodCallNode(VarNode(s[1]),s[3],s[5])
+method_call %= idx + dot + idx +       dot + idx + opar + expr_list_comma_eps + cpar,lambda h, s :  MethodCallNode(AttrCallNode(VarNode(s[1]),s[3]),s[5],s[7])
 method_call %= opar + expr + cpar +      dot + idx + opar + expr_list_comma_eps + cpar,lambda h, s :  MethodCallNode(s[2],s[5],s[7])
 
 atom %= idx, lambda h, s: VarNode(s[1])
@@ -248,5 +248,5 @@ atom %= func_call, lambda h, s: s[1]
 atom %= base + opar + expr_list_comma_eps + cpar, lambda h, s:  BaseCallNode(s[3])
 
 atom %= method_call, lambda h, s: s[1]      #
-atom %= idx + dot + idx , lambda h, s: AttrCallNode(s[1], s[3])     # attr_call
+atom %= idx + dot + idx , lambda h, s: AttrCallNode(VarNode(s[1]), s[3])     # attr_call
 

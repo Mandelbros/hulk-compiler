@@ -25,6 +25,14 @@ class Symbol(object):
 
         raise TypeError(other)
 
+    def __eq__(self, other):
+        if isinstance(other, Symbol):
+            return self.Name == other.Name
+        return False
+    
+    def __hash__(self):
+        return hash(self.Name)
+
     @property
     def IsEpsilon(self):
         return False

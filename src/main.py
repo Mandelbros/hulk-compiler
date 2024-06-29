@@ -10,27 +10,20 @@ def run_pipeline(file_path):
         text = file.read()
 
     ### TOKENIZATION PHASE
-    lexer = Lexer(table, G.EOF)
+    lexer = Lexer(table, G.EOF, rebuild=False)
     tokens = lexer(text)
-    
+    ttypes = [token.token_type for token in tokens]
 
     print('✅ OK')
 
-    # return
-
     ### PARSING PHASE
     parser = LR1Parser(G)
-
-    ttypes = [token.token_type for token in tokens]
-
     out, oper = parser(ttypes)
-
     ast = evaluate_reverse_parse(out,oper,tokens)
 
     print('✅ OK') 
-    # print(out)
-    # print(oper)
 
+    ### SEMANTIC CHECK
     ast, errors, context = semantic_check_pipeline(ast, True)
 
     if len(errors) == 0:
