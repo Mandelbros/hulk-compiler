@@ -1,4 +1,4 @@
-from parser.hulk_grammar import *
+from src.parser.hulk_grammar import *
  
 symbols = '|'.join([',',':',';','<','>','!','=',r'\?','%','.','\'',' ','\n','\t',r'\\"'])
 digits = '|'.join(str(n) for n in range(0,10))

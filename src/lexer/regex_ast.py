@@ -1,5 +1,5 @@
-from common.automata import NFA, DFA, nfa_to_dfa
-from common.automata import automata_minimization
+from src.common.automata import NFA, DFA, nfa_to_dfa
+from src.common.automata import automata_minimization
 
 EPSILON = 'ε'    ######################### ?
 

@@ -1,6 +1,6 @@
-from semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode, MethodDefNode, AttrDefNode
-import common.visitor as visitor
-from common.semantic import SemanticError, ErrorType, AutoType
+from src.semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode, MethodDefNode, AttrDefNode
+from src.common.semantic import SemanticError, ErrorType, AutoType
+import src.common.visitor as visitor
 
 class TypeBuilder(object):
     def __init__(self, context, errors=[]):

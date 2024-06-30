@@ -1,10 +1,10 @@
 import sys
-from pathlib import Path
-from lexer.lexer import Lexer
-from parser.hulk_parser import HulkParser
-from common.evaluation import evaluate_reverse_parse
-from semantics.semantic_check_pipeline import semantic_check_pipeline
 from termcolor import colored
+from pathlib import Path
+from src.lexer.lexer import HulkLexer
+from src.parser.hulk_parser import HulkParser
+from src.common.evaluation import evaluate_reverse_parse
+from src.semantics.semantic_check_pipeline import semantic_check_pipeline
 
 def prompt_error(message):
     print(colored(message, 'red'))
@@ -14,7 +14,7 @@ def run_pipeline(input_path, output_file):
         text = file.read()
 
     ### TOKENIZATION PHASE
-    lexer = Lexer(rebuild=True, save=True)
+    lexer = HulkLexer(rebuild=True, save=True)
     tokens = lexer(text)
 
     tokens, lexer_errors = lexer(text)

@@ -1,5 +1,5 @@
-from common.pycompiler import EOF
-from parser.parsing_tools import ShiftReduceParser
+from src.common.pycompiler import EOF
+from src.parser.parsing_tools import ShiftReduceParser
 
 def evaluate_reverse_parse(right_parse, operations, tokens):
     if not right_parse or not operations or not tokens:

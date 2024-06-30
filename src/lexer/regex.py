@@ -1,8 +1,8 @@
-from common.utils import Token
-from common.evaluation import evaluate_reverse_parse
-from common.automata import nfa_to_dfa, automata_minimization
-from lexer.regex_grammar import G, symbol
-from parser.parsing_tools import LR1Parser
+from src.common.utils import Token
+from src.common.evaluation import evaluate_reverse_parse
+from src.common.automata import nfa_to_dfa, automata_minimization
+from src.lexer.regex_grammar import G, symbol
+from src.parser.parsing_tools import LR1Parser
 
 parser = LR1Parser(G) 
 

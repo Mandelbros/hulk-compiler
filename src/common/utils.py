@@ -1,4 +1,4 @@
-from common.pycompiler import Production, Sentence, Symbol, EOF, Epsilon
+from src.common.pycompiler import Production, Sentence, Symbol, EOF, Epsilon
 
 class ContainerSet:
     def __init__(self, *values, contains_epsilon=False):

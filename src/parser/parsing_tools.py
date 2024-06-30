@@ -1,7 +1,7 @@
-from common.pycompiler import Item
-from common.state import State, multiline_formatter
-from common.utils import compute_firsts, compute_local_first
-from common.utils import ContainerSet
+from src.common.pycompiler import Item
+from src.common.state import State, multiline_formatter
+from src.common.utils import compute_firsts, compute_local_first
+from src.common.utils import ContainerSet
 
 class ParserError(Exception):
     def __init__(self, text, token_ind):

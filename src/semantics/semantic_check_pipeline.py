@@ -1,5 +1,5 @@
-from semantics.type_collector import TypeCollector
-from semantics.type_builder import TypeBuilder
+from src.semantics.type_collector import TypeCollector
+from src.semantics.type_builder import TypeBuilder
 
 def semantic_check_pipeline(ast, debug=False):
     if debug:

@@ -1,4 +1,4 @@
-from common.semantic import Scope
+from src.common.semantic import Scope
 from typing import List, Tuple
 
 class Node():

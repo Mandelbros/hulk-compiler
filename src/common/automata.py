@@ -1,5 +1,5 @@
 import pydot
-from common.utils import ContainerSet, DisjointSet
+from src.common.utils import ContainerSet, DisjointSet
 
 class NFA:
     def __init__(self, states, finals, transitions, start=0):

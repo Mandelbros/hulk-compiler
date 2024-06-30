@@ -1,12 +1,12 @@
-from common.utils import Token, UnknownToken
-from common.state import State
-from lexer.regex import Regex
-from common.errors import HulkLexerError
-from lexer.regex_table  import table as regex_table
-from parser.hulk_grammar import G as hulk_grammar
+from src.common.utils import Token, UnknownToken
+from src.common.state import State
+from src.lexer.regex import Regex
+from src.common.errors import HulkLexerError
+from src.lexer.regex_table  import table as regex_table
+from src.parser.hulk_grammar import G as hulk_grammar
 import dill
 
-class Lexer:
+class HulkLexer:
     def __init__(self, rebuild=False, save=False):
         self.eof = hulk_grammar.EOF
         self.regexs = None

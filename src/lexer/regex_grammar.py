@@ -1,5 +1,5 @@
-from common.pycompiler import Grammar
-from lexer.regex_ast import *
+from src.common.pycompiler import Grammar
+from src.lexer.regex_ast import *
 
 G = Grammar()
 

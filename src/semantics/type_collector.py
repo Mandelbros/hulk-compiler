@@ -1,6 +1,6 @@
-from semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode
-import common.visitor as visitor
-from common.semantic import SemanticError, Context
+from src.semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode
+from src.common.semantic import SemanticError, Context
+import src.common.visitor as visitor
 
 class TypeCollector(object):
     def __init__(self, errors=[]):

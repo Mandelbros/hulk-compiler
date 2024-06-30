@@ -1,9 +1,9 @@
-from parser.hulk_grammar import G as hulk_grammar
-from parser.parsing_tools import LR1Parser, ParserError
-from common.utils import Token
-from common.errors import HulkParserError
-from typing import List
 import dill
+from typing import List
+from src.parser.hulk_grammar import G as hulk_grammar
+from src.parser.parsing_tools import LR1Parser, ParserError
+from src.common.utils import Token
+from src.common.errors import HulkParserError
 
 class HulkParser(LR1Parser):
     def __init__(self, rebuild=False, save=False, verbose=False):
