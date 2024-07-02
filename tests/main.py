@@ -18,7 +18,8 @@ def run_tests():
     return result
 
 def print_title(color, message):
-    print(f"\n{colored(f'{"=" * 40}{message}{"=" * 40}', color)}\n")
+    line = "=" * 40
+    print(f"\n{colored(f'{line + message + line}', color)}\n")
 
 def print_results(results):
     color = 'green' if results.wasSuccessful() else 'red'

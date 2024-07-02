@@ -15,7 +15,7 @@ def run_code(input: str, debug=False):
     assert not errors
 
     ast = evaluate_reverse_parse(out, oper, tokens)
-    ast, errors, context = semantic_check_pipeline(ast, debug)
+    ast, errors, context, scope = semantic_check_pipeline(ast, debug)
     return ast, errors, context
 
 class TestHulkBase(unittest.TestCase):

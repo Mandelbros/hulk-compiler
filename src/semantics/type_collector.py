@@ -1,9 +1,9 @@
-from src.semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode
-from src.common.semantic import SemanticError, Context
+from src.semantics.hulk_ast import ProgramNode, TypeDefNode
 import src.common.visitor as visitor
+from src.common.semantic import SemanticError, Context, BoolType, NumberType, StringType, ErrorType
 
 class TypeCollector(object):
-    def __init__(self, errors=[]):
+    def __init__(self, errors = []):
         self.context = None
         self.errors = errors
 
@@ -24,13 +24,17 @@ class TypeCollector(object):
         string_type = self.context.create_type('String')
         string_type.set_parent(object_type) 
 
+        self.context.types['Boolean'] = BoolType()
+        self.context.types['Number'] = NumberType()
+        self.context.types['String'] = StringType()
+
         # Define built-in functions
         self.context.create_function('sin', ['angle'], [number_type], number_type)
         self.context.create_function('cos', ['angle'], [number_type], number_type)
         self.context.create_function('print', ['value'], [object_type], string_type)
         self.context.create_function('sqrt', ['value'], [number_type], number_type)
         self.context.create_function('exp', ['value'], [number_type], number_type)
-        self.context.create_function('log', ['value'], [number_type], number_type)
+        self.context.create_function('log', ['value1', 'value2'], [number_type, number_type], number_type)
         self.context.create_function('rand', [], [], number_type)
 
         # Visit each type and function definition in the program
@@ -44,4 +48,5 @@ class TypeCollector(object):
         try:
             self.context.create_type(node.id)  # Try to create a new type in the context
         except SemanticError as e:
+            self.context.types[node.id] = ErrorType()
             self.errors.append(e)  # Append any semantic errors encountered to the errors list

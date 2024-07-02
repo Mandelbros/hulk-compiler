@@ -1,6 +1,6 @@
 from src.semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode, MethodDefNode, AttrDefNode
-from src.common.semantic import SemanticError, ErrorType, AutoType
 import src.common.visitor as visitor
+from src.common.semantic import SemanticError, ErrorType, AutoType
 
 class TypeBuilder(object):
     def __init__(self, context, errors=[]):
@@ -9,8 +9,8 @@ class TypeBuilder(object):
         self.errors = errors
 
     def get_param_ids_and_types(self, node):
-        if node.param_ids is None or node.param_types is None:
-            return None, None
+        if node.param_ids == [] or node.param_types == []:
+            return [], []
 
         param_ids = []
         param_types = []
@@ -22,7 +22,7 @@ class TypeBuilder(object):
 
             if param_id in param_ids:
                 # Duplicate parameter identifier
-                self.errors.append(SemanticError(f'Parameter {param_id} is already declared'))
+                self.errors.append(SemanticError(SemanticError.PARAM_ALREADY_DEFINED % (param_id)))
                 index = param_ids.index(param_id)
                 param_types[index] = ErrorType()
             else:
@@ -54,14 +54,19 @@ class TypeBuilder(object):
         # Set the current type being processed
         self.current_type = self.context.get_type(node.id)
 
+        # Return if current type is ErrorType
+        if isinstance(self.current_type, ErrorType):
+            return
+        
         # Handle parent type
-        if node.parent_type == []:
-            node.parent_type = None
         self.current_type.param_ids, self.current_type.param_types = self.get_param_ids_and_types(node)
 
+        object_type = self.context.get_type('Object')
         # Check for forbidden inheritance
         if node.parent_type in ['Number', 'Boolean', 'String']:
-            self.errors.append(SemanticError(f'Type {node.id} is inheriting from forbidden type {node.parent}'))
+            self.errors.append(SemanticError(SemanticError.FORBIDDEN_INHERITANCE % (node.id, node.parent_type)))
+            # Default inheritance from Object type
+            self.current_type.set_parent(object_type)
         elif node.parent_type is not None:
             # Handle circular dependency and resolve parent type
             try:
@@ -69,7 +74,7 @@ class TypeBuilder(object):
                 current = parent
                 while current is not None:
                     if current.name == self.current_type.name:
-                        self.errors.append(SemanticError(f'Circular dependency inheritance {self.current_type.name} : {node.parent} : ... : {current.name}'))
+                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name)))
                         parent = ErrorType()
                         break
                     current = current.parent
@@ -83,7 +88,6 @@ class TypeBuilder(object):
                 self.errors.append(e)
         else:
             # Default inheritance from Object type
-            object_type = self.context.get_type('Object')
             self.current_type.set_parent(object_type)
 
         # Process attributes and methods
@@ -91,26 +95,6 @@ class TypeBuilder(object):
             self.visit(attr)
         for method in node.method_list:
             self.visit(method)
-
-    @visitor.when(FuncDefNode)
-    def visit(self, node):
-        param_ids, param_types = self.get_param_ids_and_types(node)
-
-        # Resolve the return type
-        if node.ret_type is None:
-            return_type = AutoType()
-        else:
-            try:
-                return_type = self.context.get_type(node.ret_type)
-            except SemanticError as e:
-                self.errors.append(e)
-                return_type = ErrorType()
-
-        # Create the new function
-        try:
-            self.context.create_function(node.id, param_ids, param_types, return_type)
-        except SemanticError as e:
-            self.errors.append(e)
 
     @visitor.when(AttrDefNode)
     def visit(self, node):
@@ -146,5 +130,25 @@ class TypeBuilder(object):
         # Add the new method to the current type
         try:
             self.current_type.define_method(node.id, param_ids, param_types, return_type)
+        except SemanticError as e:
+            self.errors.append(e)
+
+    @visitor.when(FuncDefNode)
+    def visit(self, node):
+        param_ids, param_types = self.get_param_ids_and_types(node)
+
+        # Resolve the return type
+        if node.ret_type is None:
+            return_type = AutoType()
+        else:
+            try:
+                return_type = self.context.get_type(node.ret_type)
+            except SemanticError as e:
+                self.errors.append(e)
+                return_type = ErrorType()
+
+        # Create the new function
+        try:
+            self.context.create_function(node.id, param_ids, param_types, return_type)
         except SemanticError as e:
             self.errors.append(e)

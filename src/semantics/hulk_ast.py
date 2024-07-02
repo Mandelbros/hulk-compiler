@@ -84,7 +84,7 @@ class FuncDefNode(DefNode):
         self.ret_type = ret_type
 
 class TypeDefNode(DefNode):                      
-    def __init__(self, idx, params, body, parent_type, parent_params=None):
+    def __init__(self, idx, params, body, parent_type, parent_params=[]):
         super().__init__()
         self.id = idx
         self.param_ids, self.param_types = zip(*params) if params else ([], [])
