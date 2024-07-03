@@ -4,17 +4,17 @@ from pathlib import Path
 from src.lexer.lexer import HulkLexer
 from src.parser.hulk_parser import HulkParser
 from src.common.evaluation import evaluate_reverse_parse
-from src.semantics.semantic_check_pipeline import semantic_check_pipeline
+from src.semantics.semantic_check_pipeline import semantic_check_pipeline 
 
 def prompt_error(message):
-    print(colored(message, 'red'))
+    print(colored(message, 'red')) 
 
 def run_pipeline(input_path, output_file): 
     with open(input_path, 'r') as file:
         text = file.read()
 
-    ### TOKENIZATION PHASE
-    lexer = HulkLexer(rebuild=False, save=True)
+    ### TOKENIZATION PHASE 
+    lexer = HulkLexer(rebuild=True, save=True)
     tokens = lexer(text)
 
     tokens, lexer_errors = lexer(text)
@@ -26,8 +26,8 @@ def run_pipeline(input_path, output_file):
 
     print('✅ LEXER - OK')
 
-    ### PARSING PHASE
-    parser = HulkParser(rebuild=False, save=True)
+    ### PARSING PHASE 
+    parser = HulkParser(rebuild=True, save=True)
     out, oper, parser_errors = parser(tokens)
 
     if parser_errors:
@@ -46,9 +46,8 @@ def run_pipeline(input_path, output_file):
         print('✅ OK')
     else:
         print("❌ OKn't") 
-        #print(errors)
-
-    ### CODEGEN
+        print(errors)
+ 
 
 if __name__ == "__main__":  
     input_path = Path(sys.argv[1]) 
