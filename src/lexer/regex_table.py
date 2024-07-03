@@ -10,6 +10,8 @@ alphanum = f'{letters}|{digits}'+'|'+'_'
 
 table = [
     (string_lit, f'((")({alphanum}|{symbols})*("))'),
+    (protocol, 'protocol'),
+    (extends, 'extends'),
     (type_, 'type'),
     (inherits, 'inherits'),
     (base, 'base'),

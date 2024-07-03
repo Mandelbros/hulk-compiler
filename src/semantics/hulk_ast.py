@@ -83,6 +83,20 @@ class FuncDefNode(DefNode):
         self.body_expr = body_expr
         self.ret_type = ret_type
 
+class ProtoDefNode(DefNode):
+      def __init__(self, idx, method_list, parent_type):
+        super().__init__()
+        self.id = idx
+        self.method_list = method_list
+        self.parent_type = parent_type
+
+class MethodSignDefNode(DefNode):
+    def __init__(self, idx, params, ret_type):
+        super().__init__()
+        self.id = idx
+        self.param_ids, self.param_types = zip(*params) if params else ([], [])
+        self.ret_type = ret_type
+
 class TypeDefNode(DefNode):                      
     def __init__(self, idx, params, body, parent_type, parent_params=[]):
         super().__init__()

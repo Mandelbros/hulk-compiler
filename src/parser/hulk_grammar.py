@@ -20,7 +20,7 @@ let_in_stmt, var_defs, typed_var, while_stmt, for_stmt = G.NonTerminals('<let-in
 if_else_stmt, elif_stmts, d_assign, method_call, func_call = G.NonTerminals('<if-else-stmt> <elif-stmts> <d-assign> <method-call> <fun-call>')
                                                                             
 # Parametros y Tipos 
-params_list, params_list_eps, typed_param = G.NonTerminals('<params-list> <params-list-eps> <typed-param>')
+param_list, param_list_eps, typed_param = G.NonTerminals('<param-list> <param-list-eps> <typed-param>')
 opt_typing, inherit_eps, type_params_eps = G.NonTerminals('<opt-typing> <inherit-eps> <type-params-eps>')                                                    
 
 # Operadores
@@ -32,10 +32,12 @@ expr_list_comma, expr_list_comma_eps = G.NonTerminals('<expr-list-comma> <expr-l
 
 # Definiciones de Miembros de Clase/Tipo
 type_def_body, type_def_body_eps, member_def, method_def, attr_def = G.NonTerminals('<type-def-body> <type-def-body-eps> <member-def> <method-def> <attr-def>')
- 
+
+proto_def, proto_def_body, method_sign_def = G.NonTerminals('<proto-def> <proto-def-body> <method-sign-def>')
+typed_param_list_eps, typed_param_list = G.NonTerminals('<typed-param-list-eps> <typed-param-list>') 
 
 # terminals
-type_, inherits, base, idx, new, is_ , as_ = G.Terminals('type inherits base <id> new is as')
+protocol, extends, type_, inherits, base, idx, new, is_ , as_ = G.Terminals('protocol extends type inherits base <id> new is as')
 let, in_, equal, d_assign = G.Terminals('let in = :=')
 function, arrow = G.Terminals('function =>')
 if_, elif_, else_ = G.Terminals('if elif else')
@@ -57,6 +59,7 @@ definition_list %= definition + definition_list, lambda h,s: [s[1]] + s[2]
 definition_list %= definition, lambda h,s: [s[1]] 
 
 definition %= func_def, lambda h,s: s[1]
+definition %= proto_def, lambda h,s: s[1]          
 definition %= type_def, lambda h,s: s[1]          
 
 expr %= simple_expr, lambda h,s: s[1]
@@ -88,27 +91,45 @@ expr_list_comma %= expr + comma + expr_list_comma, lambda h, s: [s[1]] + s[3]
 
 #func definitions
 func_def %= (
-    function + idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
+    function + idx + opar + param_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
     lambda h, s: FuncDefNode(s[2], s[4], s[8], s[6]))
 
 func_def %= (
-    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
+    function + idx + opar + param_list_eps + cpar + opt_typing + block_expr, 
     lambda h,s: FuncDefNode(s[2], s[4], s[7], s[6]))
 
 func_def %= (
-    function + idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
+    function + idx + opar + param_list_eps + cpar + opt_typing + block_expr + s_colon,
     lambda h,s: FuncDefNode(s[2], s[4], s[7], s[6]))
 
-params_list_eps %= params_list, lambda h,s: s[1]
-params_list_eps %= G.Epsilon, lambda h,s: []
+param_list_eps %= param_list, lambda h,s: s[1]
+param_list_eps %= G.Epsilon, lambda h,s: []
 
-params_list %= typed_param + comma + params_list, lambda h, s: [s[1]] + s[3]
-params_list %= typed_param, lambda h,s: [s[1]] 
+param_list %= typed_param + comma + param_list, lambda h, s: [s[1]] + s[3]
+param_list %= typed_param, lambda h,s: [s[1]] 
 
 typed_param %= idx + opt_typing, lambda h, s: (s[1], s[2])
 
 opt_typing %= G.Epsilon, lambda h, s: None
 opt_typing %= colon + idx, lambda h, s: s[2]
+
+# Protocol declaration
+proto_def %= protocol + idx + ocur + proto_def_body + ccur, lambda h, s: ProtoDefNode(s[2], s[4], None)
+proto_def %= protocol + idx + extends + idx + ocur + proto_def_body + ccur, lambda h, s: ProtoDefNode(s[2], s[6], s[4])
+
+proto_def_body %= method_sign_def + proto_def_body, lambda h, s: [s[1]] + s[2]
+proto_def_body %= method_sign_def, lambda h, s: [s[1]]
+
+method_sign_def %= (
+    idx + opar + typed_param_list_eps + cpar + colon + idx + s_colon, 
+    lambda h, s: MethodSignDefNode(s[1], s[3], s[6])
+)
+
+typed_param_list_eps %= G.Epsilon, lambda h, s: []
+typed_param_list_eps %= typed_param_list, lambda h, s: s[1]
+
+typed_param_list %= typed_param_list + comma + idx + colon + idx, lambda h, s: s[1] + [(s[3], s[5])]
+typed_param_list %= idx + colon + idx, lambda h, s: [(s[1], s[3])]
 
 #type definition
 type_def %= type_ + idx + type_params_eps + inherit_eps + ocur + type_def_body + ccur, lambda h, s: (
@@ -122,7 +143,7 @@ type_def %= type_ + idx + type_params_eps + inherits + idx + opar + expr_list_co
 inherit_eps %= G.Epsilon, lambda h, s: None
 inherit_eps %= inherits + idx, lambda h, s: s[2]
 
-type_params_eps %= opar + params_list_eps + cpar, lambda h, s: s[2]
+type_params_eps %= opar + param_list_eps + cpar, lambda h, s: s[2]
 type_params_eps %= G.Epsilon, lambda h, s: None
 
 type_def_body %= G.Epsilon, lambda h, s: []
@@ -133,17 +154,17 @@ member_def %= attr_def, lambda h, s: s[1]
 
 #methods
 method_def %= (
-    idx + opar + params_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
+    idx + opar + param_list_eps + cpar + opt_typing + arrow + simple_expr + s_colon,
     lambda h,s: MethodDefNode(s[1], s[3], s[7], s[5])                     
 )
 
 method_def %= (
-    idx + opar + params_list_eps + cpar + opt_typing + block_expr, 
+    idx + opar + param_list_eps + cpar + opt_typing + block_expr, 
     lambda h,s: MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
 method_def %= (
-    idx + opar + params_list_eps + cpar + opt_typing + block_expr + s_colon,
+    idx + opar + param_list_eps + cpar + opt_typing + block_expr + s_colon,
     lambda h,s: MethodDefNode(s[1], s[3], s[6], s[5])                 
 )
 
@@ -249,4 +270,8 @@ atom %= base + opar + expr_list_comma_eps + cpar, lambda h, s:  BaseCallNode(s[3
 
 atom %= method_call, lambda h, s: s[1]      #
 atom %= idx + dot + idx , lambda h, s: AttrCallNode(VarNode(s[1]), s[3])     # attr_call
+
+
+
+
 
