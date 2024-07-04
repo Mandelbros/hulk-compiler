@@ -2,8 +2,10 @@ from src.common.semantic import Scope
 from typing import List, Tuple
 
 class Node():
-    def __init__(self):
+    def __init__(self, row = None, col = None):
         self.scope: Scope
+        self.row = row
+        self.col = col
  
 class DefNode(Node):
     pass

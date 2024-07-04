@@ -14,7 +14,7 @@ def run_pipeline(input_path, output_file):
         text = file.read()
 
     ### TOKENIZATION PHASE 
-    lexer = HulkLexer(rebuild=True, save=True)
+    lexer = HulkLexer(rebuild=False, save=True)
     tokens = lexer(text)
 
     tokens, lexer_errors = lexer(text)
@@ -27,7 +27,7 @@ def run_pipeline(input_path, output_file):
     print('✅ LEXER - OK')
 
     ### PARSING PHASE 
-    parser = HulkParser(rebuild=True, save=True)
+    parser = HulkParser(rebuild=False, save=True)
     out, oper, parser_errors = parser(tokens)
 
     if parser_errors:
@@ -46,7 +46,7 @@ def run_pipeline(input_path, output_file):
         print('✅ OK')
     else:
         print("❌ OKn't") 
-        print(errors)
+        #print(errors)
  
 
 if __name__ == "__main__":  
