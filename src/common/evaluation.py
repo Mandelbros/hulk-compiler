@@ -27,8 +27,7 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
                 value = rule(None, synthesized)
                 cur_pos = pos[-len(body)]
                 if isinstance(value, Node):
-                    value.row = cur_pos[0]
-                    value.col = cur_pos[1]
+                    value.pos = cur_pos  # (row, column)
                 stack[-len(body):] = [value]
                 pos[-len(body):] = [cur_pos]
             else:

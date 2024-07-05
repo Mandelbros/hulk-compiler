@@ -44,12 +44,12 @@ class TypeChecker(object):
 
         if len(parent_arg_types) != len(parent_param_types):
             self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (
-                len(parent_param_types), len(parent_arg_types), self.current_type.parent.name)))
+                len(parent_param_types), len(parent_arg_types), self.current_type.parent.name), node.pos))
             return ErrorType()
 
         for parent_arg_type, parent_param_type in zip(parent_arg_types, parent_param_types):
             if not parent_arg_type.conforms_to(parent_param_type):
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (parent_arg_type.name, parent_param_type.name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (parent_arg_type.name, parent_param_type.name), node.pos))
 
         self.current_type = None
 
@@ -77,7 +77,7 @@ class TypeChecker(object):
             return return_type
 
         if not self.current_method.matches_signature(parent):
-            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name))
+            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name, node.pos))
 
         self.current_method = None
         return return_type
@@ -89,7 +89,7 @@ class TypeChecker(object):
         attr_type = self.current_type.get_attribute(node.id).type
 
         if not infered_type.conforms_to(attr_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, attr_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, attr_type.name), node.pos))
 
         return attr_type
 
@@ -100,7 +100,7 @@ class TypeChecker(object):
         infered_type = self.visit(node.body_expr)
 
         if not infered_type.conforms_to(self.current_method.return_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, self.current_method.return_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, self.current_method.return_type.name), node.pos))
 
         return_type = self.current_method.return_type
 
@@ -113,13 +113,13 @@ class TypeChecker(object):
             return return_type
 
         if parent_method.return_type != return_type or len(parent_method.param_types) != len(self.current_method.param_types):
-            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name))
+            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name, node.pos))
         else:
             for i in range(len(parent_method.param_types)):
                 parent_param_type = parent_method.param_types[i]
                 param_type = self.current_method.param_types[i]
                 if parent_param_type != param_type:
-                    self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name))
+                    self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name, node.pos))
 
         self.current_method = None
 
@@ -132,7 +132,7 @@ class TypeChecker(object):
         infered_return_type = self.visit(node.body_expr)
 
         if not infered_return_type.conforms_to(function.return_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_return_type.name, function.return_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_return_type.name, function.return_type.name), node.pos))
             return ErrorType()
 
         return function.return_type
@@ -160,7 +160,7 @@ class TypeChecker(object):
         var_type = scope.find_variable(node.id).type
 
         if not infered_type.conforms_to(var_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, var_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (infered_type.name, var_type.name), node.pos))
             var_type = ErrorType()
 
         return var_type
@@ -171,11 +171,11 @@ class TypeChecker(object):
         var_type = self.visit(node.var)
 
         if isinstance(var_type, SelfType):
-            self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY))
+            self.errors.append(SemanticError(SemanticError.SELF_IS_READONLY, node.pos))
             return ErrorType()
 
         if not expr_type.conforms_to(var_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, var_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, var_type.name), node.pos))
             return ErrorType()
 
         return var_type
@@ -186,13 +186,13 @@ class TypeChecker(object):
         var_type = self.visit(node.id)
 
         if not isinstance(var_type, SelfType):
-            self.errors.append(SemanticError(SemanticError.ATTR_ACCESS_FROM_NON_SELF))
+            self.errors.append(SemanticError(SemanticError.ATTR_ACCESS_FROM_NON_SELF, node.pos))
             return ErrorType()
         
         var_type = self.current_type.get_attribute(node.attr).type
 
         if not expr_type.conforms_to(var_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, var_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, var_type.name), node.pos))
             return ErrorType()
 
         return var_type
@@ -206,7 +206,7 @@ class TypeChecker(object):
 
         for cond_type in cond_types:
             if cond_type != BoolType():
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, BoolType().name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, BoolType().name), node.pos))
 
         expr_types = [self.visit(expr) for expr in expressions]
 
@@ -219,7 +219,7 @@ class TypeChecker(object):
         cond_type = self.visit(node.cond)
 
         if cond_type != BoolType():
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, BoolType().name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (cond_type.name, BoolType().name), node.pos))
 
         return self.visit(node.body_expr)
     
@@ -232,6 +232,7 @@ class TypeChecker(object):
         try:
             type_ = self.context.get_type(node.id, params_len = len(node.args))
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             return ErrorType()
         
@@ -241,12 +242,12 @@ class TypeChecker(object):
         args_types = [self.visit(arg) for arg in node.args]
 
         if len(args_types) != len(type_.param_types):
-            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(type_.param_types), len(args_types), type_.name)))
+            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(type_.param_types), len(args_types), type_.name), node.pos))
             return ErrorType()
 
         for arg_type, param_type in zip(args_types, type_.param_types):
             if not arg_type.conforms_to(param_type):
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name), node.pos))
                 return ErrorType()
 
         return type_
@@ -258,6 +259,7 @@ class TypeChecker(object):
         try:
             self.context.get_type_or_protocol(node.type_)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
 
         return self.context.get_type('Boolean')
@@ -269,11 +271,12 @@ class TypeChecker(object):
         try:
             cast_type = self.context.get_type_or_protocol(node.type_)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             cast_type = ErrorType()
 
         if not expr_type.conforms_to(cast_type) and not cast_type.conforms_to(expr_type):
-            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, cast_type.name)))
+            self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (expr_type.name, cast_type.name), node.pos))
             return ErrorType()
 
         return cast_type
@@ -290,10 +293,11 @@ class TypeChecker(object):
                 attr = self.current_type.get_attribute(node.attr)
                 return attr.type
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 return ErrorType()
         else:
-            self.errors.append(SemanticError(SemanticError.ATTR_ACCESS_FROM_NON_SELF))
+            self.errors.append(SemanticError(SemanticError.ATTR_ACCESS_FROM_NON_SELF, node.pos))
             return ErrorType()
 
     @visitor.when(MethodCallNode)
@@ -310,16 +314,17 @@ class TypeChecker(object):
             else:
                 method = prev_expr_type.get_method(node.method_id)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             return ErrorType()
 
         if len(args_types) != len(method.param_types):
-            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)))
+            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name), node.pos))
             return ErrorType()
 
         for arg_type, param_type in zip(args_types, method.param_types):
             if not arg_type.conforms_to(param_type):
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name), node.pos))
                 return ErrorType()
 
         return method.return_type
@@ -331,17 +336,18 @@ class TypeChecker(object):
         try:
             function = self.context.get_function(node.id)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             return ErrorType()
 
         if len(args_types) != len(function.param_types):
             self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (
-                len(function.param_types), len(args_types), function.name)))
+                len(function.param_types), len(args_types), function.name), node.pos))
             return ErrorType()
 
         for arg_type, param_type in zip(args_types, function.param_types):
             if not arg_type.conforms_to(param_type):
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name), node.pos))
                 return ErrorType()
 
         return function.return_type
@@ -351,7 +357,7 @@ class TypeChecker(object):
         args_types = [self.visit(arg) for arg in node.args]
 
         if self.current_method is None:
-            self.errors.append(SemanticError(SemanticError.BASE_OUTSIDE_METHOD))
+            self.errors.append(SemanticError(SemanticError.BASE_OUTSIDE_METHOD, node.pos))
             return ErrorType()
 
         try:
@@ -359,16 +365,17 @@ class TypeChecker(object):
             node.method_id = self.current_method.name
             node.parent_type = self.current_type.parent
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             return ErrorType()
 
         if len(args_types) != len(method.param_types):
-            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name)))
+            self.errors.append(SemanticError(SemanticError.DIF_EXPECTED_ARGUMENTS % (len(method.param_types), len(args_types), method.name), node.pos))
             return ErrorType()
 
         for arg_type, param_type in zip(args_types, method.param_types):
             if not arg_type.conforms_to(param_type):
-                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name)))
+                self.errors.append(SemanticError(SemanticError.INCOMPATIBLE_TYPES % (arg_type.name, param_type.name), node.pos))
                 return ErrorType()
 
         return method.return_type
@@ -379,7 +386,7 @@ class TypeChecker(object):
         rvalue_type = self.visit(node.rvalue)
 
         if not lvalue_type.conforms_to(rvalue_type) and not rvalue_type.conforms_to(lvalue_type):
-            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name), node.pos))
             return ErrorType()
 
         return self.context.get_type('Boolean')
@@ -392,7 +399,7 @@ class TypeChecker(object):
         rvalue_type = self.visit(node.rvalue)
 
         if lvalue_type != NumberType() or rvalue_type != NumberType():
-            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name), node.pos))
             return ErrorType()
 
         return bool_type
@@ -405,7 +412,7 @@ class TypeChecker(object):
         rvalue_type = self.visit(node.rvalue)
 
         if lvalue_type != BoolType() or rvalue_type != BoolType():
-            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name), node.pos))
             return ErrorType()
 
         return bool_type
@@ -418,7 +425,7 @@ class TypeChecker(object):
         rvalue_type = self.visit(node.rvalue)
 
         if lvalue_type != NumberType() or rvalue_type != NumberType():
-            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.oper, lvalue_type.name, rvalue_type.name), node.pos))
             return ErrorType()
 
         return number_type
@@ -431,7 +438,7 @@ class TypeChecker(object):
         rvalue_type = self.visit(node.rvalue)
 
         if not lvalue_type.conforms_to(object_type) or not rvalue_type.conforms_to(object_type):
-            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.operator, lvalue_type.name, rvalue_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_OPERATION % (node.operator, lvalue_type.name, rvalue_type.name), node.pos))
             return ErrorType()
 
         return self.context.get_type('String')
@@ -442,7 +449,7 @@ class TypeChecker(object):
         operand_type = self.visit(node.operand)
 
         if operand_type != NumberType():
-            self.errors.append(SemanticError(SemanticError.INVALID_UNARY_OPERATION % (node.oper, operand_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_UNARY_OPERATION % (node.oper, operand_type.name), node.pos))
             return ErrorType()
 
         return number_type
@@ -453,7 +460,7 @@ class TypeChecker(object):
         operand_type = self.visit(node.operand)
 
         if operand_type != BoolType():
-            self.errors.append(SemanticError(SemanticError.INVALID_UNARY_OPERATION % (node.oper, operand_type.name)))
+            self.errors.append(SemanticError(SemanticError.INVALID_UNARY_OPERATION % (node.oper, operand_type.name), node.pos))
             return ErrorType()
 
         return bool_type
@@ -463,7 +470,7 @@ class TypeChecker(object):
         var = node.scope.find_variable(node.lex)
 
         if var is None:
-            self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED % node.lex))
+            self.errors.append(SemanticError(SemanticError.VARIABLE_NOT_DEFINED % node.lex, node.pos))
             return ErrorType()
 
         return var.type

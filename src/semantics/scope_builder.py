@@ -150,6 +150,7 @@ class ScopeBuilder(object):
             try:
                 type_ = self.context.get_type_or_protocol(node.type_)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 type_ = ErrorType()
 

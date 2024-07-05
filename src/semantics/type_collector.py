@@ -54,6 +54,7 @@ class TypeCollector(object):
             self.context.create_type(node.id)  # Try to create a new type in the context
         except SemanticError as e:
             self.context.types[node.id] = ErrorType()
+            e.pos = node.pos
             self.errors.append(e)  # Append any semantic errors encountered to the errors list
 
     @visitor.when(ProtoDefNode)
@@ -62,4 +63,5 @@ class TypeCollector(object):
             self.context.create_protocol(node.id) # Try to create a new protocol in the context
         except SemanticError as e:
             self.context.protocols[node.id] = ErrorType()
+            e.pos = node.pos
             self.errors.append(e)  # Append any semantic errors encountered to the errors list

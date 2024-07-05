@@ -32,9 +32,18 @@ class SemanticError(Exception):
     FORBIDDEN_INHERITANCE = 'Type \'%s\' is inheriting from forbidden type \'%s\''
     CIRCULAR_DEPENDENCY_INHERITANCE = 'Circular dependency inheritance \'%s\' : \'%s\' : ... : \'%s\''
 
-    @property
-    def text(self):
-        return self.args[0]
+    def __init__(self, name, pos = None):
+        self.name = name
+        self.pos = pos  # (row, column)
+
+    def __str__(self):
+        if self.pos:
+            #return f'{self.name} {self.pos}'
+            return f'{self.name} (After column {self.pos[1]} of line {self.pos[0]})'
+        return f'{self.name}'
+
+    def __repr__(self):
+        return str(self)
 
 class Attribute:
     def __init__(self, name, typex):

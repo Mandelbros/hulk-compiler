@@ -6,9 +6,9 @@ class FormatVisitor(object):
         self.add_positions = add_positions
 
     def add_pos(self, ans, node):
-        if self.add_positions:
-            #return f'{ans} [row = {node.row}, col = {node.col}]'
-            return f'{ans} [{node.row}, {node.col}]'
+        if self.add_positions and node.pos:
+            #return f'{ans} (row = {node.pos[0]}, col = {node.pos[1]})'
+            return f'{ans} {node.pos}'
         else:
             return ans
 

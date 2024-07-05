@@ -22,7 +22,7 @@ class TypeBuilder(object):
 
             if param_id in param_ids:
                 # Duplicate parameter identifier
-                self.errors.append(SemanticError(SemanticError.PARAM_ALREADY_DEFINED % (param_id)))
+                self.errors.append(SemanticError(SemanticError.PARAM_ALREADY_DEFINED % (param_id), node.pos))
                 index = param_ids.index(param_id)
                 param_types[index] = ErrorType()
             else:
@@ -33,6 +33,7 @@ class TypeBuilder(object):
                     try:
                         param_type = self.context.get_type_or_protocol(param_type)
                     except SemanticError as e:
+                        e.pos = node.pos
                         self.errors.append(e)
                         param_type = ErrorType()
                 param_types.append(param_type)
@@ -64,7 +65,7 @@ class TypeBuilder(object):
         object_type = self.context.get_type('Object')
         # Check for forbidden inheritance
         if node.parent_type in ['Number', 'Boolean', 'String']:
-            self.errors.append(SemanticError(SemanticError.FORBIDDEN_INHERITANCE % (node.id, node.parent_type)))
+            self.errors.append(SemanticError(SemanticError.FORBIDDEN_INHERITANCE % (node.id, node.parent_type), node.pos))
             # Default inheritance from Object type
             self.current_type.set_parent(object_type)
         elif node.parent_type is not None:
@@ -74,17 +75,19 @@ class TypeBuilder(object):
                 current = parent
                 while current is not None:
                     if current.name == self.current_type.name:
-                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name)))
+                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name), node.pos))
                         parent = ErrorType()
                         break
                     current = current.parent
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 parent = ErrorType()
 
             try:
                 self.current_type.set_parent(parent)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
         else:
             # Default inheritance from Object type
@@ -113,17 +116,19 @@ class TypeBuilder(object):
                 current = parent
                 while current is not None:
                     if current.name == self.current_type.name:
-                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name)))
+                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name), node.pos))
                         parent = ErrorType()
                         break
                     current = current.parent
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 parent = ErrorType()
 
             try:
                 self.current_type.set_parent(parent)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
 
         # Process method signatures
@@ -138,6 +143,7 @@ class TypeBuilder(object):
         try:
             return_type = self.context.get_type_or_protocol(node.ret_type)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
             return_type = ErrorType()
 
@@ -145,6 +151,7 @@ class TypeBuilder(object):
         try:
             self.current_type.define_method(node.id, param_ids, param_types, return_type)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
 
     @visitor.when(AttrDefNode)
@@ -156,12 +163,14 @@ class TypeBuilder(object):
             try:
                 attribute_type = self.context.get_type_or_protocol(node.type_)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 attribute_type = ErrorType()
         # Add the new attribute to the current type
         try:
             self.current_type.define_attribute(node.id, attribute_type)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
 
     @visitor.when(MethodDefNode)
@@ -175,6 +184,7 @@ class TypeBuilder(object):
             try:
                 return_type = self.context.get_type_or_protocol(node.ret_type)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 return_type = ErrorType()
 
@@ -182,6 +192,7 @@ class TypeBuilder(object):
         try:
             self.current_type.define_method(node.id, param_ids, param_types, return_type)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
 
     @visitor.when(FuncDefNode)
@@ -195,6 +206,7 @@ class TypeBuilder(object):
             try:
                 return_type = self.context.get_type_or_protocol(node.ret_type)
             except SemanticError as e:
+                e.pos = node.pos
                 self.errors.append(e)
                 return_type = ErrorType()
 
@@ -202,4 +214,5 @@ class TypeBuilder(object):
         try:
             self.context.create_function(node.id, param_ids, param_types, return_type)
         except SemanticError as e:
+            e.pos = node.pos
             self.errors.append(e)
