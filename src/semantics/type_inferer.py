@@ -318,7 +318,7 @@ class TypeInferer(object):
         self.visit(node.expr)
 
         try:
-            cast_type = self.context.get_type(node.type_)
+            cast_type = self.context.get_type_or_protocol(node.type_)
         except SemanticError:
             cast_type = ErrorType()
 

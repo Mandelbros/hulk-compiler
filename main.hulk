@@ -32,10 +32,6 @@ protocol Hashable {
 protocol Equatable extends Hashable {
     equals(other: Object): Boolean;
 }
-protocol Iterable {
-    next() : Boolean;
-    current() : Object;
-}
 
 function tan(x) => sin(x)/cos(x);
 

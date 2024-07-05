@@ -102,6 +102,7 @@ class TestHulkLoops(unittest.TestCase):
             let x = iterable.current() in print(x);'''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
+    """
 
     def test_call_to_not_defined_function(self):
         inp = '''
@@ -116,7 +117,6 @@ class TestHulkLoops(unittest.TestCase):
             let x = iterable.current() in print(x);'''
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
-    """
     
     def test(self):
         type_test = """
@@ -199,7 +199,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(1, len(errors))
 
-    """
     def test________(self):
         inp = ('''
                 protocol A {
@@ -229,8 +228,7 @@ class TestHulkLoops(unittest.TestCase):
                 ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors))
-    """
-
+    
     def test__________(self):
         inp = ('''
                    type A(x) {

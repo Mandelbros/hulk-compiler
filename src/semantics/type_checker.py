@@ -53,6 +53,35 @@ class TypeChecker(object):
 
         self.current_type = None
 
+    @visitor.when(ProtoDefNode)
+    def visit(self, node):
+        self.current_type = self.context.get_protocol(node.id)
+        for method_sign in node.method_list:
+            self.visit(method_sign)
+        self.current_type = None
+
+    @visitor.when(MethodSignDefNode)
+    def visit(self, node):
+        if isinstance(self.current_type, ErrorType):
+            return ErrorType()
+
+        self.current_method = self.current_type.get_method(node.id)
+        return_type = self.current_method.return_type
+
+        if self.current_type.parent is None or isinstance(self.current_type.parent, ErrorType):
+            return return_type
+
+        try:
+            parent = self.current_type.parent.get_method(node.id)
+        except SemanticError:
+            return return_type
+
+        if not self.current_method.matches_signature(parent):
+            self.errors.append(SemanticError(SemanticError.WRONG_SIGNATURE % self.current_method.name))
+
+        self.current_method = None
+        return return_type
+
     @visitor.when(AttrDefNode)
     def visit(self, node):
         infered_type = self.visit(node.expr)
@@ -227,7 +256,7 @@ class TypeChecker(object):
         self.visit(node.expr)
 
         try:
-            self.context.get_type(node.type_)
+            self.context.get_type_or_protocol(node.type_)
         except SemanticError as e:
             self.errors.append(e)
 
@@ -238,7 +267,7 @@ class TypeChecker(object):
         expr_type = self.visit(node.expr)
 
         try:
-            cast_type = self.context.get_type(node.type_)
+            cast_type = self.context.get_type_or_protocol(node.type_)
         except SemanticError as e:
             self.errors.append(e)
             cast_type = ErrorType()

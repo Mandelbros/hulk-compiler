@@ -15,9 +15,11 @@ class SemanticError(Exception):
     ATTR_ACCESS_FROM_NON_SELF = 'Cannot access an attribute from a non-self object'
     PARENT_TYPE_SET = 'Parent type is already set for \'%s\'.'
     FUNCTION_NOT_DEFINED = 'Function \'%s\' is not defined.'
+    PROTOCOL_NOT_DEFINED = 'Protocol \'%s\' is not defined.'
     TYPE_NOT_DEFINED = 'Type \'%s\' is not defined.'
     ATTR_NOT_DEFINED = 'Attribute \'%s\' is not defined in \'%s\'.'
     METHOD_NOT_DEFINED = 'Method \'%s\' is not defined in \'%s\'.'
+    PROTOCOL_ALREADY_DEFINED = 'Protocol with the same name (\'%s\') already in context.'
     TYPE_ALREADY_DEFINED = 'Type with the same name (\'%s\') already in context.'
     FUNCTION_ALREADY_DEFINED = 'Function with the same name (\'%s\') already in context.'
     ATTR_ALREADY_DEFINED = 'Attribute \'%s\' is already defined in \'%s\'.'
@@ -62,6 +64,16 @@ class Method:
         self.param_vars = []
         self.return_type = return_type
 
+    def matches_signature(self, other):
+        # Check same names, covariance of return types and same amount of params
+        if self.name != other.name or not self.return_type.conforms_to(other.return_type) or len(self.param_types) != len(other.param_types):
+            return False
+        for i in range(len(self.param_types)):
+            # Check contravariance of param types
+            if not other.param_types[i].conforms_to(self.param_types[i]):
+                return False
+        return True
+
     def inference_errors(self):
         errors = []
 
@@ -85,6 +97,69 @@ class Method:
         return other.name == self.name and \
             other.return_type == self.return_type and \
             other.param_types == self.param_types
+
+class Protocol:
+    def __init__(self, name):
+        self.name = name
+        self.methods = []
+        self.parent = None
+
+    def set_parent(self, parent):
+        if self.parent is not None:
+            raise SemanticError(SemanticError.PARENT_TYPE_SET % (self.name))
+        self.parent = parent
+
+    def get_method(self, name):
+        try:
+            return next(method for method in self.methods if method.name == name)
+        except StopIteration:
+            if self.parent is None:
+                raise SemanticError(SemanticError.METHOD_NOT_DEFINED % (name, self.name))
+            try:
+                return self.parent.get_method(name)
+            except SemanticError:
+                raise SemanticError(SemanticError.METHOD_NOT_DEFINED % (name, self.name))
+
+    def define_method(self, name, param_ids, param_types, return_type):
+        if name in (method.name for method in self.methods):
+            raise SemanticError(SemanticError.METHOD_ALREADY_DEFINED % (name, self.name))
+
+        method = Method(name, param_ids, param_types, return_type)
+        self.methods.append(method)
+        return method
+
+    def conforms_to(self, other):
+        if other == ObjectType():
+            return True
+        if isinstance(other, Type):
+            return False
+        if self == other or (self.parent is not None and self.parent.conforms_to(
+            other)):
+            return True
+        if isinstance(other, Protocol):
+            for method_sign in other.methods:
+                try:
+                    method = self.get_method(method_sign.name)
+                except SemanticError:
+                    return False
+                if not method.matches_signature(method_sign):
+                    return False
+            return True
+        return False
+
+    def __str__(self):
+        output = f'protocol {self.name}'
+        parent = '' if self.parent is None else f' extends {self.parent.name}'
+        output += parent
+        output += ' {'
+        output += '\n\t' if self.methods else ''
+        output += '\n\t'.join(str(method_sign) for method_sign in self.methods)
+        output += '\n' if self.methods else ''
+        output += '}\n'
+        return output
+
+    def __repr__(self):
+        return str(self)
 
 class Type:
     def __init__(self, name:str):
@@ -157,7 +232,18 @@ class Type:
         return param_ids, param_types
 
     def conforms_to(self, other):
-        return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        if isinstance(other, Type):
+            return other.bypass() or self == other or self.parent is not None and self.parent.conforms_to(other)
+        if isinstance(other, Protocol):
+            for method_sign in other.methods:
+                try:
+                    method = self.get_method(method_sign.name)
+                except SemanticError:
+                    return False
+                if not method.matches_signature(method_sign):
+                    return False
+            return True
+        return False
 
     def inference_errors(self):
         if isinstance(self, ErrorType):
@@ -298,12 +384,15 @@ class Function:
 
 class Context:
     def __init__(self):
+        self.protocols = {}
         self.types = {}
         self.functions = {}
 
     def create_type(self, name:str):
         if name in self.types:
             raise SemanticError(SemanticError.TYPE_ALREADY_DEFINED % (name))
+        if name in self.protocols:
+            raise SemanticError(SemanticError.PROTOCOL_ALREADY_DEFINED % (name))
         typex = self.types[name] = Type(name)
         return typex
 
@@ -330,6 +419,26 @@ class Context:
         except KeyError:
             raise SemanticError(SemanticError.FUNCTION_NOT_DEFINED % (name))
         
+    def create_protocol(self, name):
+        if name in self.types:
+            raise SemanticError(SemanticError.TYPE_ALREADY_DEFINED % (name))
+        if name in self.protocols:
+            raise SemanticError(SemanticError.PROTOCOL_ALREADY_DEFINED % (name))
+        protocol = self.protocols[name] = Protocol(name)
+        return protocol
+    
+    def get_protocol(self, name):
+        try:
+            return self.protocols[name]
+        except KeyError:
+            raise SemanticError(SemanticError.PROTOCOL_NOT_DEFINED % (name))
+        
+    def get_type_or_protocol(self, name):
+        try:
+            return self.get_type(name)
+        except SemanticError:
+            return self.get_protocol(name)
+        
     def inference_errors(self):
         errors = []
 
@@ -342,7 +451,8 @@ class Context:
         return errors
 
     def __str__(self):
-        return ('{\n\t' + '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
+        return ('{\n\t' + '\n\t'.join(y for x in self.protocols.values() for y in str(x).split('\n')) +
+                '\n\t'.join(y for x in self.types.values() for y in str(x).split('\n')) +
                 '\n\t'.join(y for x in self.functions.values() for y in str(x).split('\n')) + '\n}')
 
     def __repr__(self):

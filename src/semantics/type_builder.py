@@ -1,4 +1,4 @@
-from src.semantics.hulk_ast import ProgramNode, TypeDefNode, FuncDefNode, MethodDefNode, AttrDefNode
+from src.semantics.hulk_ast import ProgramNode, TypeDefNode, ProtoDefNode, MethodSignDefNode, FuncDefNode, MethodDefNode, AttrDefNode
 import src.common.visitor as visitor
 from src.common.semantic import SemanticError, ErrorType, AutoType
 
@@ -31,7 +31,7 @@ class TypeBuilder(object):
                     param_type = AutoType()
                 else:
                     try:
-                        param_type = self.context.get_type(param_type)
+                        param_type = self.context.get_type_or_protocol(param_type)
                     except SemanticError as e:
                         self.errors.append(e)
                         param_type = ErrorType()
@@ -96,6 +96,57 @@ class TypeBuilder(object):
         for method in node.method_list:
             self.visit(method)
 
+    @visitor.when(ProtoDefNode)
+    def visit(self, node):
+        # Set the current type/protocol being processed
+        self.current_type = self.context.get_protocol(node.id)
+
+        # Return if current type/protocol is ErrorType
+        if isinstance(self.current_type, ErrorType):
+            return
+
+        # Handle parent type
+        if node.parent_type is not None:
+            # Handle circular dependency and resolve parent type
+            try:
+                parent = self.context.get_protocol(node.parent_type)
+                current = parent
+                while current is not None:
+                    if current.name == self.current_type.name:
+                        self.errors.append(SemanticError(SemanticError.CIRCULAR_DEPENDENCY_INHERITANCE % (current.name, node.parent_type, current.name)))
+                        parent = ErrorType()
+                        break
+                    current = current.parent
+            except SemanticError as e:
+                self.errors.append(e)
+                parent = ErrorType()
+
+            try:
+                self.current_type.set_parent(parent)
+            except SemanticError as e:
+                self.errors.append(e)
+
+        # Process method signatures
+        for method_sign in node.method_list:
+            self.visit(method_sign)
+
+    @visitor.when(MethodSignDefNode)
+    def visit(self, node):
+        param_ids, param_types = self.get_param_ids_and_types(node)
+
+        # Resolve return type
+        try:
+            return_type = self.context.get_type_or_protocol(node.ret_type)
+        except SemanticError as e:
+            self.errors.append(e)
+            return_type = ErrorType()
+
+        # Add the new method to the current protocol
+        try:
+            self.current_type.define_method(node.id, param_ids, param_types, return_type)
+        except SemanticError as e:
+            self.errors.append(e)
+
     @visitor.when(AttrDefNode)
     def visit(self, node):
         # Resolve the type
@@ -103,7 +154,7 @@ class TypeBuilder(object):
             attribute_type = AutoType()
         else:
             try:
-                attribute_type = self.context.get_type(node.type_)
+                attribute_type = self.context.get_type_or_protocol(node.type_)
             except SemanticError as e:
                 self.errors.append(e)
                 attribute_type = ErrorType()
@@ -122,7 +173,7 @@ class TypeBuilder(object):
             return_type = AutoType()
         else:
             try:
-                return_type = self.context.get_type(node.ret_type)
+                return_type = self.context.get_type_or_protocol(node.ret_type)
             except SemanticError as e:
                 self.errors.append(e)
                 return_type = ErrorType()
@@ -142,7 +193,7 @@ class TypeBuilder(object):
             return_type = AutoType()
         else:
             try:
-                return_type = self.context.get_type(node.ret_type)
+                return_type = self.context.get_type_or_protocol(node.ret_type)
             except SemanticError as e:
                 self.errors.append(e)
                 return_type = ErrorType()

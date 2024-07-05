@@ -44,16 +44,17 @@ class FormatVisitor(object):
         methods = '\n'.join([self.visit(method, tabs + 1) for method in node.method_list])
         return f'{self.add_pos(ans, node)}{parent_params}\n{attributes}\n{methods}'
     
-    # To do
     @visitor.when(ProtoDefNode)
     def visit(self, node, tabs=0):
-        ans = '\t' * tabs + f'\\__ ProtoDefNode:'
-        return f'{self.add_pos(ans, node)}'
+        method_signs = '\n'.join(self.visit(definition, tabs + 1) for definition in node.method_list)
+        parent_type = f": {node.parent_type}" if node.parent_type else ""
+        ans = '\t' * tabs + f'\\__ ProtoDefNode: protocol {node.id}{parent_type} -> <body>'
+        return f'{self.add_pos(ans, node)}\n{method_signs}'
 
-    # To do
     @visitor.when(MethodSignDefNode)
     def visit(self, node, tabs=0):
-        ans = '\t' * tabs + f'\\__ MethodSignDefNode:'
+        params = ', '.join([f'{node.param_ids[i]}' + f': {node.param_types[i]}' for i in range(len(node.param_ids))])
+        ans = '\t' * tabs + f'\\__ MethodSignDefNode: {node.id}({params}):{node.ret_type}'
         return f'{self.add_pos(ans, node)}'
 
     @visitor.when(AttrDefNode)
