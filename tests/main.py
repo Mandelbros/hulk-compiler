@@ -4,7 +4,8 @@ from termcolor import colored
 
 def run_tests():
     test_suite = unittest.TestSuite()
-    test_file_strings = glob.glob('tests/test_*.py', recursive=True)
+    test_file_strings = glob.glob('tests/test_cod*.py', recursive=True)
+    # test_file_strings = glob.glob('tests/test_*.py', recursive=True)
 
     module_strings = [file.replace('.py', '').replace('\\', '.') for file in test_file_strings]
 

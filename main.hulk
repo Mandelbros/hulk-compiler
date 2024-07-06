@@ -26,17 +26,6 @@ type Cat(race, name, age) inherits Animal(name, age){
     }
 }
 
-protocol Hashable {
-    hash(): Number;
-}
-protocol Equatable extends Hashable {
-    equals(other: Object): Boolean;
-}
-protocol Iterable {
-    next() : Boolean;
-    current() : Object;
-}
-
 function tan(x) => sin(x)/cos(x);
 
 
@@ -203,6 +192,5 @@ type C inherits A {
             print (test_cat.maulla());
             print (test_dog.ladra("alex", 22));
         };
-
-    let x : Hashable = new Person() in print(x.hash())
+ 
 }

@@ -1,5 +1,6 @@
 import itertools as itt
 from collections import OrderedDict
+from typing import Dict
 
 
 class SemanticError(Exception):
@@ -94,7 +95,7 @@ class Type:
         self.param_vars = []
         self.attributes = []
         self.methods = []
-        self.parent = None
+        self.parent: 'Type' = None
 
     def set_parent(self, parent):
         if self.parent is not None:
@@ -178,6 +179,16 @@ class Type:
                 errors.append(SemanticError(SemanticError.CANNOT_INFER_PARAM_TYPE % (param_id, self.name)))
                 self.param_types[i] = ErrorType()
         return errors
+    
+    def lowest_ancestor_with_method(self, name: str) -> 'Type':      
+        t = self.parent
+
+        while t is not None:
+            if any(m for m in t.methods if m.name == name):
+                return t
+            t = t.parent
+
+        return self
     
     def bypass(self):
         return False
@@ -298,7 +309,7 @@ class Function:
 
 class Context:
     def __init__(self):
-        self.types = {}
+        self.types: Dict[str, Type] = {}
         self.functions = {}
 
     def create_type(self, name:str):
