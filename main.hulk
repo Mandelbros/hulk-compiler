@@ -26,6 +26,13 @@ type Cat(race, name, age) inherits Animal(name, age){
     }
 }
 
+protocol Hashable {
+    hash(): Number;
+}
+protocol Equatable extends Hashable {
+    equals(other: Object): Boolean;
+}
+
 function tan(x) => sin(x)/cos(x);
 
 

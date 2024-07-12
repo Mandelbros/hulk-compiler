@@ -89,6 +89,7 @@ class TypeInferer(object):
                 try:
                     most_specialized_type = get_most_specialized_type(local_var.infered_types, var_name = param_id)
                 except SemanticError as e:
+                    e.pos = node.pos
                     self.errors.append(e)
                     most_specialized_type = ErrorType()
                 self.current_type.param_types[i] = most_specialized_type
@@ -145,6 +146,7 @@ class TypeInferer(object):
                 try:
                     most_specialized_type = get_most_specialized_type(local_var.infered_types, var_name = param_id)
                 except SemanticError as e:
+                    e.pos = node.pos
                     self.errors.append(e)
                     most_specialized_type = ErrorType()
                 self.current_method.param_types[i] = most_specialized_type
@@ -189,6 +191,7 @@ class TypeInferer(object):
                 try:
                     most_specialized_type = get_most_specialized_type(local_var.infered_types, var_name = param_id)
                 except SemanticError as e:
+                    e.pos = node.pos
                     self.errors.append(e)
                     most_specialized_type = ErrorType()
                 function.param_types[i] = most_specialized_type
@@ -318,7 +321,7 @@ class TypeInferer(object):
         self.visit(node.expr)
 
         try:
-            cast_type = self.context.get_type(node.type_)
+            cast_type = self.context.get_type_or_protocol(node.type_)
         except SemanticError:
             cast_type = ErrorType()
 

@@ -2,8 +2,9 @@ from src.common.semantic import Scope
 from typing import List, Tuple
 
 class Node():
-    def __init__(self):
+    def __init__(self, pos = None):
         self.scope: Scope
+        self.pos = pos
  
 class DefNode(Node):
     pass

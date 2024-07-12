@@ -1,3 +1,4 @@
+from src.semantics.format_visitor import FormatVisitor
 from src.semantics.type_collector import TypeCollector
 from src.semantics.type_builder import TypeBuilder
 from src.semantics.scope_builder import ScopeBuilder
@@ -5,6 +6,12 @@ from src.semantics.type_inferer import TypeInferer
 from src.semantics.type_checker import TypeChecker
 
 def semantic_check_pipeline(ast, debug = False):
+    if debug:
+        print('============== VISUALIZING AST ==============')
+        formatter = FormatVisitor(add_positions = True)
+        tree = formatter.visit(ast)
+        print(tree)
+
     if debug:
         print('============== COLLECTING TYPES ==============')
     errors = []
