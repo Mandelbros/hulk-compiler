@@ -375,3 +375,41 @@ int __search_type(int curr, int target)
     return mk;
 }
 
+/////////////////////////////////////////////////////////////////////////
+
+Object *__next_range(Object *r)
+{
+    double *curr = (double *)__find_member(r, "curr_ind");
+
+    double *end = __find_member(r, "end");
+
+    if (*curr + 1 == *end)
+        return __make_bool(0);
+
+    *curr = *curr + 1;
+
+    return __make_bool(1);
+}
+
+Object *__current_range(Object *r)
+{
+    double *curr = __find_member(r, "curr_ind");
+
+    return __make_number(*curr);
+}
+ 
+
+Object *___builtin_range(Object *obj1, Object *obj2)
+{
+    double *val1 = __find_member(obj1, "value");
+    double *val2 = __find_member(obj2, "value");
+    double *curr = malloc(sizeof(double));
+    *curr = *val1 - 1;
+
+    Object *range = __create_object();
+    __add_member(range, "start", val1);
+    __add_member(range, "end", val2); 
+    __add_member(range, "f_current", *__current_range);
+    __add_member(range, "f_next", *__next_range);
+    __add_member(range, "curr_ind", curr);
+}

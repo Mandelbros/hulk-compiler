@@ -60,7 +60,6 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    """
     def test_for_translation(self):
         inp = '''
         let iterable = range(0, 10) in
@@ -69,7 +68,6 @@ class TestHulkLoops(unittest.TestCase):
             '''
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
 
     def test_(self):
         inp = '''
@@ -123,7 +121,7 @@ class TestHulkLoops(unittest.TestCase):
         """
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
+
     def test10(self):
         inp = '''
          function IsPrime(n) => 
@@ -134,7 +132,7 @@ class TestHulkLoops(unittest.TestCase):
 
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
+
     def test11(self):
         inp = '''
          print(
@@ -174,7 +172,7 @@ class TestHulkLoops(unittest.TestCase):
 
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
-    """
+ 
     def test13(self):
         inp = '''
                function fact(x) => let f = 1 in for (i in range(1, x+1)) f := f * i;
@@ -189,5 +187,4 @@ class TestHulkLoops(unittest.TestCase):
                fact(3);
                '''
         ast, errors, context, scope = run_code(inp, True)
-        self.assertEqual(1, len(errors), f"Expects 1 error, but got {len(errors)}")
-    """
+        self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")

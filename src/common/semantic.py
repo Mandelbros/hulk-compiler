@@ -404,7 +404,7 @@ class Function:
 
 class Context:
     def __init__(self):
-        self.protocols = {}
+        self.protocols: Dict[str, Protocol] = {}
         self.types: Dict[str, Type] = {}
         self.functions = {}
 

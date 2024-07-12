@@ -189,8 +189,8 @@ elif_stmts %= G.Epsilon, lambda h, s: []
 
 #loopsssss
 while_stmt %= while_ + opar + expr + cpar + expr, lambda h, s: WhileNode(s[3], s[5])
-for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: ForNode(s[3], s[5], s[7])
-# for_stmt %= for_ + opar + idx + in_ + func_call + cpar + expr, lambda h, s: LetInNode([VarDefNode("iterable",InstantiationNode(s[5].idx,s[5].args))],WhileNode(MethodCallNode("iterable","next",[]),LetInNode([VarDefNode(idx,MethodCallNode("iterable","current",[]))],s[7])))
+# for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: ForNode(s[3], s[5], s[7])
+for_stmt %= for_ + opar + idx + in_ + expr + cpar + expr, lambda h, s: LetInNode([VarDefNode("iterable",s[5])],WhileNode(MethodCallNode(VarNode("iterable"),"next",[]),LetInNode([VarDefNode(s[3],MethodCallNode(VarNode("iterable"),"current",[]))],s[7])))
 
 #func_call
 func_call %= idx + opar + expr_list_comma_eps + cpar, lambda h, s: FuncCallNode(s[1], s[3])

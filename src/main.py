@@ -17,7 +17,7 @@ def run_pipeline(input_path, output_file):
 
     ### TOKENIZATION PHASE
     lexer = HulkLexer(rebuild=False, save=False)
-    # lexer = HulkLexer(rebuild=False, save=True)
+    # lexer = HulkLexer(rebuild=True, save=True)
     tokens = lexer(text)
 
     tokens, lexer_errors = lexer(text)
@@ -31,7 +31,7 @@ def run_pipeline(input_path, output_file):
 
     ### PARSING PHASE
     parser = HulkParser(rebuild=False, save=False)
-    # parser = HulkParser(rebuild=False, save=True)
+    # parser = HulkParser(rebuild=True, save=True)
     out, oper, parser_errors = parser(tokens)
 
     if parser_errors:

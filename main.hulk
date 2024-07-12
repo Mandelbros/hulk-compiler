@@ -1,41 +1,4 @@
- type Animal(name, age){
-    name = name;
-    age = age;
-
-    name() => self.name;
-    age() => self.age;
-}
-
-type Dog(race, name, age) inherits Animal(name, age){
-    race = race;
-
-    ladra(name, age){
-        let phrase = "esta ladrando" in {
-            name @@ age @@ phrase;
-        };
-    }
-}
-
-type Cat(race, name, age) inherits Animal(name, age){
-    race = race;
-
-    maulla(){
-        let phrase = "esta maullando como un" in {
-            self.name() @@ self.age() @@ phrase @@ self.race;
-        };
-    }
-}
-
-protocol Hashable {
-    hash(): Number;
-}
-protocol Equatable extends Hashable {
-    equals(other: Object): Boolean;
-}
-
-function tan(x) => sin(x)/cos(x);
-
-
+function tan(x: Number): Number => sin(x) / cos(x);
 function cot(x) => 1 / tan(x);
 function operate(x, y) {
     print(x + y);
@@ -44,13 +7,20 @@ function operate(x, y) {
     print(x / y);
 }
 function fib(n) => if (n == 0 | n == 1) 1 else fib(n-1) + fib(n-2);
-
+function fact(x) => let f = 1 in for (i in range(1, x+1)) f := f * i;
 function gcd(a, b) => while (a > 0)
         let m = a % b in {
             b := a;
             a := m;
         };
- 
+        
+protocol Hashable {
+    hash(): Number;
+}
+protocol Equatable extends Hashable {
+    equals(other: Object): Boolean;
+}
+
 
 type Point(x,y) {
     x = x;
@@ -62,12 +32,10 @@ type Point(x,y) {
     setX(x) => self.x := x;
     setY(y) => self.y := y;
 }
-
 type PolarPoint(phi, rho) inherits Point(rho * sin(phi), rho * cos(phi)) {
     rho() => sqrt(self.getX() ^ 2 + self.getY() ^ 2);
 }
-
-type Knight(firstname, lastname) inherits Person(firstname, lastname) {
+type Knight inherits Person {
     name() => "Sir" @@ base();
 }
 type Person(firstname, lastname) {
@@ -102,6 +70,7 @@ type C inherits A {
     print(42);
     print((((1 + 2) ^ 3) * 4) / 5);
     print("Hello World");
+    print("The message is \"Hello World\"");
     print("The meaning of life is " @ 42);
     print(sin(2 * PI) ^ 2 + cos(3 * PI / log(4, 64)));
     {
@@ -149,7 +118,7 @@ type C inherits A {
         print(a);
     };
     let a = 0 in
-        let b = (a := 1) in {
+        let b = a := 1 in {
             print(a);
             print(b);
         };
@@ -161,12 +130,27 @@ type C inherits A {
             print("Even");
         }
         else print("Odd");
-    
+
+    let a = 42, mod = a % 3 in 
+        print(
+            if (mod == 0) "Magic"
+            elif (mod % 3 == 1) "Woke"
+            else "Dumb"
+        );
+
     let a = 10 in while (a >= 0) {
         print(a);
         a := a - 1;
     };
+    
+    for (x in range(0, 10)) print(x);
+    let iterable = range(0, 10) in
+        while (iterable.next())
+            let x = iterable.current() in
+                print(x);
 
+    let pt = new Point(0,0) in             
+        print("x: " @ pt.getX() @ "; y: " @ pt.getY());
     let pt = new Point(3,4) in
         print("x: " @ pt.getX() @ "; y: " @ pt.getY());
     let pt = new PolarPoint(3,4) in
@@ -175,7 +159,6 @@ type C inherits A {
     let p = new Knight("Phil", "Collins") in
         print(p.name());
     let p: Person = new Knight("Phil", "Collins") in print(p.name());
-    
     let x: Number = 42 in print(x);
 
     let x = new Superman() in
@@ -194,10 +177,8 @@ type C inherits A {
         else {
             print("x cannot be downcasted to B");
         };
- 
-    let test_dog = new Dog("sato", "balto", 7), test_cat = new Cat("siames", "Lucas", 4) in {
-            print (test_cat.maulla());
-            print (test_dog.ladra("alex", 22));
-        };
- 
+
+    let x : Hashable = new Person("Juan","Tomas") in print(x.hash());
+
+    let x = new Point(0,0) in print(x.getX());
 }

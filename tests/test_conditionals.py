@@ -61,14 +61,11 @@ class TestHulkConditionals(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(2, len(errors), f"Expects 2 error, but got {len(errors)}")
 
-    """
     def test_for_loop(self):
         inp = 'for (x in range(0, 10)) print(x);'
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
-    
-    """
+
     def test_for_translation(self):
         inp = '''
         let iterable = range(0, 10) in
@@ -76,7 +73,6 @@ class TestHulkConditionals(unittest.TestCase):
             let x = iterable.current() in print(x);'''
         ast, errors, context, scope = run_code(inp)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
 
     def test(self):
         type_test = """

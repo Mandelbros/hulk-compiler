@@ -67,5 +67,10 @@ Object *___builtin_sqrt(Object *obj);
 Object *___builtin_log(Object *obj1, Object *obj2);
 Object *___builtin_rand();
 
+Object *___builtin_range(Object *obj1, Object *obj2);
+Object *__next_range(Object *r);
+Object *__current_range(Object *r);
+
 extern int **hierarchy_graph;
 int __search_type(int curr, int target);
+

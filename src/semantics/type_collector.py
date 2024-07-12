@@ -17,16 +17,16 @@ class TypeCollector(object):
 
         # Define built-in types
         object_type = self.context.create_type('Object')
-        bool_type = self.context.create_type('Boolean')
-        bool_type.set_parent(object_type)
-        number_type = self.context.create_type('Number')
-        number_type.set_parent(object_type)
         string_type = self.context.create_type('String')
         string_type.set_parent(object_type) 
+        number_type = self.context.create_type('Number')
+        number_type.set_parent(object_type)
+        bool_type = self.context.create_type('Boolean')
+        bool_type.set_parent(object_type)
 
-        self.context.types['Boolean'] = BoolType()
-        self.context.types['Number'] = NumberType()
         self.context.types['String'] = StringType()
+        self.context.types['Number'] = NumberType()
+        self.context.types['Boolean'] = BoolType()
 
         # Define built-in functions
         self.context.create_function('sin', ['angle'], [number_type], number_type)
@@ -41,6 +41,17 @@ class TypeCollector(object):
         iterable_protocol = self.context.create_protocol('Iterable')
         iterable_protocol.define_method('next', [], [], bool_type)
         iterable_protocol.define_method('current', [], [], object_type)
+
+        range_type = self.context.create_type('Range')
+        range_type.set_parent(object_type)
+        range_type.param_ids, range_type.param_types = ['min', 'max'], [number_type, number_type]
+        range_type.define_attribute('min', number_type)
+        range_type.define_attribute('max', number_type)
+        range_type.define_attribute('current', number_type)
+        range_type.define_method('next', [], [], bool_type)
+        range_type.define_method('current', [], [], number_type)
+
+        self.context.create_function('range', ['min', 'max'], [number_type, number_type], range_type)
 
         # Visit each type and function definition in the program
         for definition in node.def_list:

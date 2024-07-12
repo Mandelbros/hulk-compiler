@@ -34,9 +34,17 @@ class HulkTranspiler(object):
             adjacency_list.append([])
             self.type_id_map[k] = len(self.type_id_map)
 
-        for k, type_ in self.type_builder_context.types.items():
+        for k in self.type_builder_context.protocols.keys():
+            adjacency_list.append([])
+            self.type_id_map[k] = len(self.type_id_map)
+
+        for type_name, type_ in self.type_builder_context.types.items():
             if type_.parent is not None:
-                adjacency_list[self.type_id_map[k]].append(self.type_id_map[type_.parent.name])
+                adjacency_list[self.type_id_map[type_name]].append(self.type_id_map[type_.parent.name])
+
+            for proto_name, proto_ in self.type_builder_context.protocols.items(): 
+                if type_.conforms_to(proto_):                                                          
+                    adjacency_list[self.type_id_map[type_name]].append(self.type_id_map[proto_name])
 
         context.new_line(f'hierarchy_graph = malloc(sizeof(int*) * {len(adjacency_list)});')
 
@@ -115,18 +123,19 @@ class HulkTranspiler(object):
         for i in node.attr_list: 
             v = attr_context.new_var()
             attr_context.push_var(v)
-
             self.visit(i.expr, attr_context)
+
             attr_context.new_line(f'__add_member({ct}, "p_{i.id}", {v});')
 
         if node.parent_type != None:         #it has inheritance?
             if node.parent_params:              #the inheritance has args?
                 parameters_ih = []
 
-                for p in node.parent_params:
+                for p in node.parent_params: 
                     v = attr_context.new_var()
                     attr_context.push_var(v)
                     self.visit(p, attr_context)
+
                     parameters_ih.append(v)
 
                 attr_context.new_line(f'attr_{node.parent_type}({ct}{"" if len(parameters_ih)==0 else ", "}{", ".join(parameters_ih)});')
@@ -135,6 +144,8 @@ class HulkTranspiler(object):
 
         attr_context.new_line('}')
 
+
+        #builder method
         build_context.new_line(definition_c[:-1])
         build_context.new_line('{')
 
@@ -319,7 +330,7 @@ class HulkTranspiler(object):
 
         params = ', '.join(v)
         
-        func_prefix = '___builtin_' if node.id in ['sin','cos','sqrt','log','rand','print'] else '_'
+        func_prefix = '___builtin_' if node.id in ['sin','cos','sqrt','log','rand','print','range'] else '_'
 
         context.new_line(f'Object *{context.pop_var()} = {func_prefix}{node.id}({params});')
         

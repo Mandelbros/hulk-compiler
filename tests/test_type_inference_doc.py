@@ -36,7 +36,7 @@ class TestHulkLoops(unittest.TestCase):
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
 
-    """
+
     def test3(self):
         inp = ('''
         function fact(x) => 
@@ -45,4 +45,3 @@ class TestHulkLoops(unittest.TestCase):
         ''')
         ast, errors, context, scope = run_code(inp, True)
         self.assertEqual(0, len(errors), f"Expects 0 error, but got {len(errors)}")
-    """
