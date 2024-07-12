@@ -142,8 +142,6 @@ class HulkTranspiler(object):
         build_context.new_line(f'Object *{ct} = __create_object();')
 
         for f, t in functions:
-            if f.name == 'init':
-                continue
             build_context.new_line(f'__add_member({ct}, "f_{f.name}", *type_{t.name}_{f.name});')
 
         t = self.type_builder_context.get_type(node.id)

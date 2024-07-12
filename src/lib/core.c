@@ -88,18 +88,15 @@ Object *type_object_to_string(Object *t)
 Object *__make_string(char *value)
 {
     Object *s = __create_object();
-    int *len = malloc(sizeof(int));
-    int *curr = malloc(sizeof(int));
+    int *len = malloc(sizeof(int)); 
     int *type_ind = malloc(sizeof(int));
 
-    *len = strlen(value);
-    *curr = 0;
+    *len = strlen(value); 
     *type_ind = 1;
 
     __add_member(s, "type", "String");
     __add_member(s, "value", value);
-    __add_member(s, "len", len);
-    __add_member(s, "curr", curr);
+    __add_member(s, "len", len); 
     __add_member(s, "type_ind", type_ind);
     __add_member(s, "f_to_string", *__to_string_string);
 
@@ -111,7 +108,7 @@ Object *__to_string_string(Object *string)
     return string;
 }
 
-Object *__concat_string(Object *string1, Object *string2)
+Object *__concat_string(Object *string1, Object *string2)               //cucu
 {
     Object *(*to_string1)(Object *) = __find_member(string1, "f_to_string");
     Object *(*to_string2)(Object *) = __find_member(string2, "f_to_string");
@@ -125,7 +122,7 @@ Object *__concat_string(Object *string1, Object *string2)
     char *value1 = __find_member(string1, "value");
     char *value2 = __find_member(string2, "value");
 
-    char *aux = malloc(sizeof(char) * (*len1 + *len2 + 1));
+    char *aux = malloc(sizeof(char) * (*len1 + *len2 + 1));     // xq +1 wdf
     strcpy(aux, value1);
     strcat(aux, value2);
     return __make_string(aux);
@@ -153,7 +150,7 @@ Object *__make_number(double n)
 
 Object *__eq_number(Object *obj1, Object *obj2)
 {
-    return __make_bool(__to_double(obj1) == __to_double(obj2));
+    return __make_bool(__to_double(obj1) == __to_double(obj2));         //comparar doubles :skull: eps
 }
 
 Object *__comp_number(Object *obj1, Object *obj2)
@@ -174,7 +171,7 @@ Object *__to_string_number(Object *n)
     double *value = __find_member(n, "value");
 
     char *str = malloc(1024);
-    sprintf(str, "%f", *value);
+    sprintf(str, "%f", *value);     //qejesto
     return __make_string(str);
 }
 
@@ -313,7 +310,7 @@ Object *__comp(Object *obj1, Object *obj2)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-Object *___builtin_print(Object *t)
+Object *___builtin_print(Object *t)             //annadir el exp!!!!!!
 {
     Object *(*to_string)(Object *) = __find_member(t, "f_to_string");
     Object *s = to_string(t);
