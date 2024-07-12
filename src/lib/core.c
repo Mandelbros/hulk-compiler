@@ -358,6 +358,13 @@ Object *___builtin_rand()
     return __make_number(random_value); 
 }
 
+Object *___builtin_exp(Object *obj)
+{
+    double *val1 = __find_member(obj, "value");
+
+    return __make_number(exp(*val1));
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 int __search_type(int curr, int target)

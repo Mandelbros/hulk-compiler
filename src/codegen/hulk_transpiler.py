@@ -93,12 +93,11 @@ class HulkTranspiler(object):
         context.new_line(definition[:-1])
         context.new_line('{')
 
-        vr = context.new_var()
-        context.push_var(vr)
-
+        return_v = context.new_var()
+        context.push_var(return_v)
         self.visit(node.body_expr, context)
 
-        context.new_line(f'return {vr};')
+        context.new_line(f'return {return_v};')
         context.new_line('}')
 
     @visitor.when(TypeDefNode)
@@ -176,33 +175,32 @@ class HulkTranspiler(object):
     def visit(self, node: MethodDefNode, type_name: str):
         context = self.add_function()
 
-        ct = context.define_var('self')
+        self_v = context.define_var('self')
 
         base_type = self.type_builder_context.get_type(type_name).lowest_ancestor_with_method(node.id).name
 
         context.define_base(f'type_{base_type}_{node.id}')
 
-        definition = f'Object *type_{type_name}_{node.id}(Object *{ct}{", " if len(node.param_ids)!=0 else ""}{", ".join(f"Object *{context.define_var(p)}" for p in node.param_ids)});'
+        definition = f'Object *type_{type_name}_{node.id}(Object *{self_v}{", " if len(node.param_ids)!=0 else ""}{", ".join(f"Object *{context.define_var(p)}" for p in node.param_ids)});'
         self.add_definition(definition)
 
         context.new_line(definition[:-1])
         context.new_line('{')
 
-        vr = context.new_var()
-        context.push_var(vr)
-
+        return_v = context.new_var()
+        context.push_var(return_v)
         self.visit(node.body_expr, context)
 
         context.define_base('')
 
-        context.new_line(f'return {vr};')
+        context.new_line(f'return {return_v};')
         context.new_line('}')
 
     @visitor.when(ExprBlockNode)
     def visit(self, node: ExprBlockNode, context: TranspilerScope):
         for expr in node.expr_list[:-1]:
-            expr_val = context.new_var()
-            context.push_var(expr_val)
+            expr_v = context.new_var()
+            context.push_var(expr_v)
             self.visit(expr, context)
 
         self.visit(node.expr_list[-1], context)
@@ -222,36 +220,37 @@ class HulkTranspiler(object):
 
     @visitor.when(WhileNode)
     def visit(self, node: WhileNode, context: TranspilerScope):
-        vr = context.pop_var()
-        vc = context.new_var()
-        context.new_line(f'Object *{vr};')
+        return_v = context.pop_var()
+        context.new_line(f'Object *{return_v};')
 
-        cond = context.new_var()
-        context.push_var(cond)
+        vc = context.new_var()
+
+        cond_v = context.new_var()
+        context.push_var(cond_v)
         self.visit(node.cond, context)
 
-        context.new_line(f'Object *{vc} = {cond};')
+        context.new_line(f'Object *{vc} = {cond_v};')
         context.new_line(f'while(__to_bool({vc}))')
         context.new_line('{')
 
-        body = context.new_var()
-        context.push_var(body)
+        body_expr_v = context.new_var()
+        context.push_var(body_expr_v)
         self.visit(node.body_expr, context)
 
-        context.new_line(f'{vr} = {body};')
+        context.new_line(f'{return_v} = {body_expr_v};')
 
-        cond = context.new_var()
-        context.push_var(cond)
+        cond_v = context.new_var()
+        context.push_var(cond_v)
         self.visit(node.cond, context)
 
-        context.new_line(f'{vc} = {cond};')
+        context.new_line(f'{vc} = {cond_v};')
 
         context.new_line('}')
 
     @visitor.when(IfElseNode)
     def visit(self, node: IfElseNode, context: TranspilerScope):
-        ret_val_v = context.pop_var()
-        context.new_line(f'Object *{ret_val_v};')
+        return_v = context.pop_var()
+        context.new_line(f'Object *{return_v};')
 
         for i, (if_cond, if_expr) in enumerate(node.if_stmts):
             cond_v = context.new_var()
@@ -265,7 +264,7 @@ class HulkTranspiler(object):
             context.push_var(body_v)
             self.visit(if_expr, context)
 
-            context.new_line(f'{ret_val_v} = {body_v};')
+            context.new_line(f'{return_v} = {body_v};')
             context.new_line('}')
             context.new_line('else')
             context.new_line('{')
@@ -275,102 +274,98 @@ class HulkTranspiler(object):
                 context.push_var(body_v)
                 self.visit(node.else_expr, context)
 
-                context.new_line(f'{ret_val_v} = {body_v};')
+                context.new_line(f'{return_v} = {body_v};')
 
         for _ in node.if_stmts:
             context.new_line('}')
 
     @visitor.when(DestructiveAssignNode)
     def visit(self, node: DestructiveAssignNode, context: TranspilerScope):
-        vn = context.get_var(node.var.lex)
-        vc = context.new_var()
-        context.push_var(vc)
+        dvar_v = context.get_var(node.var.lex)
 
+        expr_v = context.new_var()
+        context.push_var(expr_v)
         self.visit(node.expr, context)
 
-        context.new_line(f'{vn} = {vc};')
-        context.new_line(f'Object *{context.pop_var()} = {vc};')
+        context.new_line(f'{dvar_v} = {expr_v};')
+        context.new_line(f'Object *{context.pop_var()} = {expr_v};')
 
     @visitor.when(AttrAssignNode)
     def visit(self, node: AttrAssignNode, context: TranspilerScope):
-        v = context.new_var()
-        context.push_var(v)
-
+        expr_v = context.new_var()
+        context.push_var(expr_v)
         self.visit(node.expr, context)
 
         context.new_line(f'__remove_member({context.get_var("self")}, "p_{node.attr}");')
-        context.new_line(f'__add_member({context.get_var("self")}, "p_{node.attr}", {v});')
-        context.new_line(f'Object *{context.pop_var()} = {v};')
+        context.new_line(f'__add_member({context.get_var("self")}, "p_{node.attr}", {expr_v});')
+        context.new_line(f'Object *{context.pop_var()} = {expr_v};')
     
     @visitor.when(InstantiationNode)
     def visit(self, node: InstantiationNode, context: TranspilerScope):
-        vp = []
+        args = []
 
-        for p in node.args:
+        for arg in node.args:
             aux = context.new_var()
             context.push_var(aux)
-            vp.append(aux)
+            args.append(aux)
+            self.visit(arg, context)
 
-            self.visit(p, context)
+        args_str = ', '.join(args)
 
-        params = ', '.join(vp)
-
-        context.new_line(f'Object *{context.pop_var()} = make_{node.id}({params});')
+        context.new_line(f'Object *{context.pop_var()} = make_{node.id}({args_str});')
 
     @visitor.when(FuncCallNode)
     def visit(self, node: FuncCallNode, context: TranspilerScope):
-        v = []
+        args = []
 
-        for p in node.args:
-            aux = context.new_var()
-            context.push_var(aux)
-            v.append(aux)
+        for arg in node.args:
+            arg_v = context.new_var()
+            context.push_var(arg_v)
+            args.append(arg_v)
 
-            self.visit(p, context)
+            self.visit(arg, context)
 
-        params = ', '.join(v)
+        args_str = ', '.join(args)
         
-        func_prefix = '___builtin_' if node.id in ['sin','cos','sqrt','log','rand','print','range'] else '_'
+        func_prefix = '___builtin_' if node.id in ['sin','cos','sqrt','log','rand','print','range','exp'] else '_'
 
-        context.new_line(f'Object *{context.pop_var()} = {func_prefix}{node.id}({params});')
+        context.new_line(f'Object *{context.pop_var()} = {func_prefix}{node.id}({args_str});')
         
     @visitor.when(MethodCallNode)
     def visit(self, node: MethodCallNode, context: TranspilerScope):
         v = context.new_var()
         context.push_var(v)
-
         self.visit(node.prev_expr, context)
 
         f = context.new_var()
         context.new_line(f'Object *(*{f})({", ".join("Object *" for _ in range(len(node.args)+1))}) = __find_member({v}, "f_{node.method_id}");')
 
-        vp = []
+        args = []
 
-        for p in node.args:
-            aux = context.new_var()
-            context.push_var(aux)
-            vp.append(aux)
+        for arg in node.args:
+            arg_v = context.new_var()
+            context.push_var(arg_v)
+            args.append(arg_v)
+            self.visit(arg, context)
 
-            self.visit(p, context)
+        args_str = f'{v}{", "if len(node.args)!=0 else ""}{", ".join(args)}'
 
-        params = f'{v}{", "if len(node.args)!=0 else ""}{", ".join(vp)}'
-
-        context.new_line(f'Object *{context.pop_var()} = {f}({params});')
+        context.new_line(f'Object *{context.pop_var()} = {f}({args_str});')
 
     @visitor.when(BaseCallNode)
     def visit(self, node: BaseCallNode, context: TranspilerScope):
-        v = []
+        args = []
 
-        for p in node.args:
-            aux = context.new_var()
-            context.push_var(aux)
-            v.append(aux)
+        for arg_expr in node.args:
+            arg_v = context.new_var()
+            context.push_var(arg_v)
+            args.append(arg_v)
 
-            self.visit(p, context)
+            self.visit(arg_expr, context)
 
-        params = ', '.join(v)
+        args_str= ', '.join(args)
 
-        context.new_line(f'Object *{context.pop_var()} = {context.base}({context.get_var("self")}{"" if len(params)==0 else ", "}{params});')
+        context.new_line(f'Object *{context.pop_var()} = {context.base}({context.get_var("self")}{"" if len(args_str)==0 else ", "}{args_str});')
 
     @visitor.when(AttrCallNode)
     def visit(self, node: AttrCallNode, context: TranspilerScope):
@@ -378,16 +373,14 @@ class HulkTranspiler(object):
 
     @visitor.when(IsNode)
     def visit(self, node: IsNode, context: TranspilerScope):
-        v = context.new_var()
-        context.push_var(v)
-
+        expr_v = context.new_var()
+        context.push_var(expr_v)
         self.visit(node.expr, context)
 
         ind = context.new_var()
-        context.new_line(f'int *{ind} = __find_member({v}, "type_ind");')
+        context.new_line(f'int *{ind} = __find_member({expr_v}, "type_ind");')
 
         t = node.type_
-
         context.new_line(f'Object *{context.pop_var()} = __make_bool(__search_type(*{ind}, {self.type_id_map[t]}));')
 
     @visitor.when(AsNode)
@@ -407,13 +400,12 @@ class HulkTranspiler(object):
         context.new_line(f'Object *{context.pop_var()} = {v_value};')
 
        
-
-
     @visitor.when(AddNode)              
     def visit(self, node: AddNode, context: TranspilerScope):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -425,6 +417,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -436,6 +429,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -447,6 +441,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -458,6 +453,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -469,6 +465,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -489,6 +486,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -500,6 +498,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -511,6 +510,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -522,6 +522,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -533,6 +534,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context) 
@@ -544,6 +546,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -555,6 +558,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -566,6 +570,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)
@@ -585,6 +590,7 @@ class HulkTranspiler(object):
         lvalue = context.new_var()
         context.push_var(lvalue)
         self.visit(node.lvalue, context)
+
         rvalue = context.new_var()
         context.push_var(rvalue)
         self.visit(node.rvalue, context)

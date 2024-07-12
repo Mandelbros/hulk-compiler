@@ -19,9 +19,6 @@ class Regex():
         
         is_symbol_set = is_escape = False
         for char in self.text:
-            # if skip_whitespaces and char.isspace():                       ?
-            #     continue
-            
             if is_escape:
                 token = Token(char, symbol)
 

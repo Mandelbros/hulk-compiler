@@ -18,7 +18,6 @@ def run_pipeline(input_path, output_file):
     ### TOKENIZATION PHASE
     lexer = HulkLexer(rebuild=False, save=False)
     # lexer = HulkLexer(rebuild=True, save=True)
-    tokens = lexer(text)
 
     tokens, lexer_errors = lexer(text)
 

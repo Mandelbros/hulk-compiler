@@ -66,6 +66,7 @@ Object *___builtin_cos(Object *obj);
 Object *___builtin_sqrt(Object *obj);
 Object *___builtin_log(Object *obj1, Object *obj2);
 Object *___builtin_rand();
+Object *___builtin_exp(Object *obj);
 
 Object *___builtin_range(Object *obj1, Object *obj2);
 Object *__next_range(Object *r);
